@@ -1,0 +1,9 @@
+# MONOPOLY FULL EVENT LOG
+[PLAYERS]
+playerCount=2
+p:0,Player_1
+p:1,Player_2
+
+[EVENTS]
+1,1,0,0,-1,0,0,-60,0,0,P-BR1,none
+2,1,1,0,-1,0,0,-60,0,0,P-BR2,none
