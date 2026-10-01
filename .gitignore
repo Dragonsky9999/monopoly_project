@@ -1,0 +1,15 @@
+﻿build/
+bin/
+lib/
+out/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+.DS_Store
+Thumbs.db
