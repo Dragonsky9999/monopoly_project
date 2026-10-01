@@ -14,7 +14,7 @@ enum class SetupMode {
 struct GameSettings {
     SetupMode mode = SetupMode::NEW_GAME;
     int playerCount = 2;
-    std::vector<std::string> playerNames = {"Player", "AI_1"};
+    std::vector<std::string> playerNames = {"AI_1", "AI_2"};
     int startingMoney = 1500;
     bool enableTax = true;
     bool enableGoBonus = true;
@@ -53,11 +53,10 @@ public:
         }
 
         settings.playerNames.clear();
-        int humanCount = 0;
         int aiCount = 0;
 
         for (int i = 0; i < settings.playerCount; ++i) {
-            std::cout << "Enter name for Player " << (i + 1) << ": ";
+            std::cout << "Enter name for Player " << (i + 1) << " (blank for AI): ";
             
             if (std::getline(std::cin, line)) {
                 // トリム
@@ -65,25 +64,15 @@ public:
                 line.erase(std::find_if(line.rbegin(), line.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), line.end());
 
                 if (line.empty()) {
-                    // 空白の場合、出現した順（累積カウント）で命名
-                    if (i == 0) {
-                        humanCount++;
-                        settings.playerNames.push_back("Player" + (humanCount > 1 ? " " + std::to_string(humanCount) : ""));
-                    } else {
-                        aiCount++;
-                        settings.playerNames.push_back("AI_" + std::to_string(aiCount));
-                    }
+                    // 0番目を含め、空白の場合はすべて AI_連番 とする
+                    aiCount++;
+                    settings.playerNames.push_back("AI_" + std::to_string(aiCount));
                 } else {
                     settings.playerNames.push_back(line);
                 }
             } else {
-                if (i == 0) {
-                    humanCount++;
-                    settings.playerNames.push_back("Player");
-                } else {
-                    aiCount++;
-                    settings.playerNames.push_back("AI_" + std::to_string(aiCount));
-                }
+                aiCount++;
+                settings.playerNames.push_back("AI_" + std::to_string(aiCount));
             }
         }
 
