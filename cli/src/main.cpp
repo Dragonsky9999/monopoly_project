@@ -199,7 +199,6 @@ int main() {
         engine.initGame(config.playerNames, config.enableTax);
     }
 
-    // プレイヤー名に "AI" が含まれる場合、自動的に AIPlayer として登録
     std::unordered_map<int, std::unique_ptr<AIPlayer>> aiPlayers;
     for (int i = 0; i < config.playerCount; ++i) {
         std::string upperName = config.playerNames[i];
@@ -289,8 +288,11 @@ int main() {
                 engine.setNegotiationReady(activeId, true);
                 printStatus(engine);
             }
-        } else if (cmd == "save" / * cmd == "export" */) {
-            std::string saveName = generateTimestampedFilename();
+        } else if (cmd == "save" || cmd == "export") {
+            std::string saveName;
+            if (!(ss >> saveName)) {
+                saveName = generateTimestampedFilename();
+            }
             if (engine.exportLog(saveName)) {
                 std::cout << "Saved Log to: " << saveName << std::endl;
             }
