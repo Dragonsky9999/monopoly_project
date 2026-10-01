@@ -239,7 +239,13 @@ int main() {
         const auto& state = engine.getState();
         int activeId = state.activePlayerIndex;
         std::cout << "\n[" << state.players[activeId].name << " (" << phaseToString(state.currentPhase) << ")]> ";
-        if (!std::getline(std::cin, line)) break;
+        if (!std::getline(std::cin, line)) {
+            // EOF (Ctrl+Z / Ctrl+D) の場合も自動保存
+            std::string autoSaveName = generateTimestampedFilename();
+            engine.exportLog(autoSaveName);
+            std::cout << "\n[Auto-Save] Deterministic Log saved to: " << autoSaveName << std::endl;
+            break;
+        }
 
         std::stringstream ss(line);
         std::string rawCmd;
@@ -247,6 +253,10 @@ int main() {
         std::string cmd = toLower(rawCmd);
 
         if (cmd == "exit") {
+            std::string autoSaveName = generateTimestampedFilename();
+            if (engine.exportLog(autoSaveName)) {
+                std::cout << "[Auto-Save] Log saved on exit to: " << autoSaveName << std::endl;
+            }
             std::cout << "Exiting game..." << std::endl;
             break;
         } else if (cmd == "save" || cmd == "export") {
