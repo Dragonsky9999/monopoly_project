@@ -14,9 +14,10 @@ enum class SetupMode {
 struct GameSettings {
     SetupMode mode = SetupMode::NEW_GAME;
     int playerCount = 2;
-    std::vector<std::string> playerNames = {"Player_1", "Player_2"};
+    std::vector<std::string> playerNames = {"Player_1", "AI_Bot_2"};
     int startingMoney = 1500;
     bool enableTax = true;
+    bool enableGoBonus = true;
     std::string importFilename = "";
 };
 
@@ -53,11 +54,12 @@ public:
 
         settings.playerNames.clear();
         for (int i = 0; i < settings.playerCount; ++i) {
-            std::cout << "Enter name for Player " << (i + 1) << " (e.g. Player_" << (i + 1) << " or AI_Bot_" << (i + 1) << "): ";
+            std::string defaultName = (i == 0) ? "Player_1" : ("AI_Bot_" + std::to_string(i + 1));
+            std::cout << "Enter name for Player " << (i + 1) << " (e.g. Player_1 or AI_Bot_2, default: " << defaultName << "): ";
             if (std::getline(std::cin, line) && !line.empty()) {
                 settings.playerNames.push_back(line);
             } else {
-                settings.playerNames.push_back("Player_" + std::to_string(i + 1));
+                settings.playerNames.push_back(defaultName);
             }
         }
 
@@ -69,7 +71,13 @@ public:
             } catch (...) {}
         }
 
-        std::cout << "Enable Tax squares & GO bonus rules? (y/n, default y): ";
+        std::cout << "Enable GO Bonus (pass GO -> +200万)? (y/n, default y): ";
+        if (std::getline(std::cin, line) && !line.empty()) {
+            char c = std::tolower(line[0]);
+            if (c == 'n') settings.enableGoBonus = false;
+        }
+
+        std::cout << "Enable Tax squares (Income Tax / Luxury Tax)? (y/n, default y): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             char c = std::tolower(line[0]);
             if (c == 'n') settings.enableTax = false;

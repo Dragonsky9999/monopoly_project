@@ -193,11 +193,10 @@ int main() {
             std::cout << "Successfully loaded and replayed Log File: " << config.importFilename << std::endl;
         } else {
             std::cout << "[Error] Failed to load log file. Starting default game." << std::endl;
-            engine.initGame({"Player_1", "Player_2"}, config.enableTax);
+            engine.initGame({"Player_1", "AI_Bot_2"}, config.enableTax);
         }
     } else {
         engine.initGame(config.playerNames, config.enableTax);
-        // ウィザードで指定された初期所持金を全プレイヤーに適用
         if (config.startingMoney != 1500) {
             for (int i = 0; i < config.playerCount; ++i) {
                 engine.forceSetMoney(i, config.startingMoney);
@@ -205,13 +204,16 @@ int main() {
         }
     }
 
+    // 名前が "AI_" または "BOT" で始まる場合に自動的に AIPlayer ボットとして登録
     std::unordered_map<int, std::unique_ptr<AIPlayer>> aiPlayers;
     for (int i = 0; i < config.playerCount; ++i) {
-        std::string upperName = config.playerNames[i];
+        std::string name = config.playerNames[i];
+        std::string upperName = name;
         std::transform(upperName.begin(), upperName.end(), upperName.begin(), ::toupper);
-        if (upperName.find("AI") != std::string::npos || upperName.find("BOT") != std::string::npos) {
+        
+        if (upperName.rfind("AI_", 0) == 0 || upperName.find("BOT") != std::string::npos) {
             aiPlayers[i] = std::make_unique<AIPlayer>(i, AIDifficulty::BALANCED);
-            std::cout << "Registered AI Bot for Player [" << i << "] " << config.playerNames[i] << std::endl;
+            std::cout << "Registered AI Bot for Player [" << i << "] " << name << std::endl;
         }
     }
 
