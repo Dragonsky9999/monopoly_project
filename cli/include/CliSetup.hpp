@@ -30,7 +30,7 @@ public:
         std::cout << "================================================================================" << std::endl;
         std::cout << " [1] New Game" << std::endl;
         std::cout << " [2] Load & Replay Log File" << std::endl;
-        std::cout << "Select Mode [1-2] (default 1): ";
+        std::cout << "Select Mode [1-2]: ";
 
         std::string line;
         if (std::getline(std::cin, line) && !line.empty()) {
@@ -42,7 +42,7 @@ public:
             }
         }
 
-        std::cout << "\nEnter number of players (2 - 10, default 2): ";
+        std::cout << "\nEnter number of players (2 - 10): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             try {
                 int count = std::stoi(line);
@@ -57,16 +57,15 @@ public:
         int aiCount = 0;
 
         for (int i = 0; i < settings.playerCount; ++i) {
-            std::string defaultHint = (i == 0) ? "Player" : "AI_";
-            std::cout << "Enter name for Player " << (i + 1) << " (e.g. Player or AI_, default: " << defaultHint << "): ";
+            std::cout << "Enter name for Player " << (i + 1) << ": ";
             
             if (std::getline(std::cin, line)) {
-                // 前後の空白トリム
+                // トリム
                 line.erase(line.begin(), std::find_if(line.begin(), line.end(), [](unsigned char ch) { return !std::isspace(ch); }));
                 line.erase(std::find_if(line.rbegin(), line.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), line.end());
 
                 if (line.empty()) {
-                    // 空白の場合、裏で勝手に連番を付与
+                    // 空白の場合は裏で勝手に割り当て
                     if (i == 0) {
                         humanCount++;
                         settings.playerNames.push_back("Player" + (humanCount > 1 ? " " + std::to_string(humanCount) : ""));
@@ -83,7 +82,7 @@ public:
             }
         }
 
-        std::cout << "Enter starting money per player in 万 (default 1500): ";
+        std::cout << "Enter starting money per player in 万: ";
         if (std::getline(std::cin, line) && !line.empty()) {
             try {
                 int money = std::stoi(line);
@@ -91,13 +90,13 @@ public:
             } catch (...) {}
         }
 
-        std::cout << "Enable GO Bonus (pass GO -> +200万)? (y/n, default y): ";
+        std::cout << "Enable GO Bonus (pass GO -> +200万)? (y/n): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             char c = std::tolower(line[0]);
             if (c == 'n') settings.enableGoBonus = false;
         }
 
-        std::cout << "Enable Tax squares (Income Tax / Luxury Tax)? (y/n, default y): ";
+        std::cout << "Enable Tax squares (Income Tax / Luxury Tax)? (y/n): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             char c = std::tolower(line[0]);
             if (c == 'n') settings.enableTax = false;
