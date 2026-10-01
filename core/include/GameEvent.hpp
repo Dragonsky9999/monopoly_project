@@ -11,30 +11,32 @@ enum class ActionType {
     PAY_RENT,
     PAY_TAX,
     GO_BONUS,
-    TRADE_OFFER,
     TRADE_EXECUTE,
     TRADE_CANCEL,
     BUILD_HOUSE,
     SELL_HOUSE,
-    MORTGAGE,
     BANKRUPT,
     OVERRIDE
 };
 
 struct GameEvent {
-    int eventId;
-    int turn;
-    int playerId;
-    ActionType type;
-    
+    int eventId = 0;
+    int turn = 0;
+    int playerId = 0;
+    ActionType type = ActionType::PASS;
     int targetPlayerId = -1;
+    
+    int dice1 = 0;
+    int dice2 = 0;
+
     int moneyChange = 0;
+    int offerMoney = 0;
+    int requestMoney = 0;
+
     std::vector<CardId> cardsGained;
     std::vector<CardId> cardsLost;
 
-    int playerMoneyAfter;
-    int totalAssetAfter;
-    double expectedValueDelta = 0.0;
+    int playerMoneyAfter = 0;
 };
 
 #endif

@@ -25,13 +25,14 @@ enum class GroupType {
 
 struct Card {
     CardId id;
-    std::string cliName;    // 例: "P-BR1", "R-1"
-    std::string guiDisplay; // 例: "1"
+    std::string cliName;
+    std::string guiDisplay;
     GroupType group;
-    int boardPosition;      // 0 ~ 39
-    int price;              // 購入価格 (万円)
-    int housePrice;         // 家建設費用 (万円)
-    std::vector<int> rent;  // 地代・家建て時等の家賃リスト
+    int boardPosition;
+    int price;
+    int housePrice;
+    std::vector<int> rent;
+    int houseCount = 0; // 現在建っている家の数 (0~5: 5はホテル)
 };
 
 #endif

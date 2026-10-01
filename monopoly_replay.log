@@ -1,0 +1,20 @@
+﻿# 完全版 MONOPOLY EVENT LOG
+[CONFIG]
+playerCount=2
+startingMoney=1500
+goBonus=200
+enableTax=1
+
+[PLAYERS]
+p:0,Riku
+p:1,Ryota
+
+[EVENTS]
+# eventId,turn,playerId,actionType,targetPlayerId,dice1,dice2,moneyChange,offerMoney,requestMoney,offerCards,requestCards
+1,1,0,PURCHASE,-1,0,0,-60,0,0,P-BR1,none
+2,1,1,PURCHASE,-1,0,0,-60,0,0,P-BR2,none
+3,1,0,PASS,-1,0,0,0,0,0,none,none
+4,1,1,PASS,-1,0,0,0,0,0,none,none
+5,1,0,TRADE_EXEC,1,0,0,0,300,0,P-DB2,P-BR2
+6,1,0,BUILD,-1,0,0,-50,0,0,P-BR1,none
+7,1,0,ROLL_AND_MOVE,-1,3,4,0,0,0,none,none

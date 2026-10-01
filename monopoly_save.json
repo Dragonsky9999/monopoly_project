@@ -1,0 +1,17 @@
+﻿[META]
+turnNumber=1
+currentPhase=2
+activePlayerIndex=0
+enableTax=1
+
+[PLAYERS]
+playerCount=2
+p:0,Riku,1340,6,0
+cards:0,2
+p:1,Ryota,1500,0,0
+cards:1
+
+[HOUSES]
+0=0
+1=0
+2=0
