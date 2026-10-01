@@ -41,7 +41,7 @@ public:
             }
         }
 
-        std::cout << "\nEnter number of players (2 - 10): ";
+        std::cout << "\nEnter number of players (2 - 10, default 2): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             try {
                 int count = std::stoi(line);
@@ -53,7 +53,7 @@ public:
 
         settings.playerNames.clear();
         for (int i = 0; i < settings.playerCount; ++i) {
-            std::cout << "Enter name for Player " << (i + 1) << " (default: Player_" << (i + 1) << "): ";
+            std::cout << "Enter name for Player " << (i + 1) << " (e.g. Player_" << (i + 1) << " or AI_Bot_" << (i + 1) << "): ";
             if (std::getline(std::cin, line) && !line.empty()) {
                 settings.playerNames.push_back(line);
             } else {
@@ -61,7 +61,15 @@ public:
             }
         }
 
-        std::cout << "Enable Tax squares? (y/n, default y): ";
+        std::cout << "Enter starting money per player in 万 (default 1500): ";
+        if (std::getline(std::cin, line) && !line.empty()) {
+            try {
+                int money = std::stoi(line);
+                if (money > 0) settings.startingMoney = money;
+            } catch (...) {}
+        }
+
+        std::cout << "Enable Tax squares & GO bonus rules? (y/n, default y): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             char c = std::tolower(line[0]);
             if (c == 'n') settings.enableTax = false;

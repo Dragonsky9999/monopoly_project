@@ -197,6 +197,12 @@ int main() {
         }
     } else {
         engine.initGame(config.playerNames, config.enableTax);
+        // ウィザードで指定された初期所持金を全プレイヤーに適用
+        if (config.startingMoney != 1500) {
+            for (int i = 0; i < config.playerCount; ++i) {
+                engine.forceSetMoney(i, config.startingMoney);
+            }
+        }
     }
 
     std::unordered_map<int, std::unique_ptr<AIPlayer>> aiPlayers;
