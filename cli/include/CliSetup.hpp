@@ -30,7 +30,7 @@ public:
         std::cout << "================================================================================" << std::endl;
         std::cout << " [1] New Game" << std::endl;
         std::cout << " [2] Load & Replay Log File" << std::endl;
-        std::cout << "Select Mode [1-2]: ";
+        std::cout << "Select Mode [1-2] (default 1): ";
 
         std::string line;
         if (std::getline(std::cin, line) && !line.empty()) {
@@ -42,7 +42,7 @@ public:
             }
         }
 
-        std::cout << "\nEnter number of players (2 - 10): ";
+        std::cout << "\nEnter number of players (2 - 10, default 2): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             try {
                 int count = std::stoi(line);
@@ -65,7 +65,6 @@ public:
                 line.erase(std::find_if(line.rbegin(), line.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), line.end());
 
                 if (line.empty()) {
-                    // 空白の場合は裏で勝手に割り当て
                     if (i == 0) {
                         humanCount++;
                         settings.playerNames.push_back("Player" + (humanCount > 1 ? " " + std::to_string(humanCount) : ""));
@@ -82,7 +81,7 @@ public:
             }
         }
 
-        std::cout << "Enter starting money per player in 万: ";
+        std::cout << "Enter starting money per player in man (default 1500): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             try {
                 int money = std::stoi(line);
@@ -90,13 +89,13 @@ public:
             } catch (...) {}
         }
 
-        std::cout << "Enable GO Bonus (pass GO -> +200万)? (y/n): ";
+        std::cout << "Enable GO Bonus (pass GO -> +200)? (y/n, default y): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             char c = std::tolower(line[0]);
             if (c == 'n') settings.enableGoBonus = false;
         }
 
-        std::cout << "Enable Tax squares (Income Tax / Luxury Tax)? (y/n): ";
+        std::cout << "Enable Tax squares? (y/n, default y): ";
         if (std::getline(std::cin, line) && !line.empty()) {
             char c = std::tolower(line[0]);
             if (c == 'n') settings.enableTax = false;
