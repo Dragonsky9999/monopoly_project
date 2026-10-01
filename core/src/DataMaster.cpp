@@ -1,4 +1,4 @@
-﻿#include "DataMaster.hpp"
+﻿#include "../include/DataMaster.hpp"
 
 std::unordered_map<CardId, Card> DataMaster::createCardMaster() {
     std::unordered_map<CardId, Card> m;
