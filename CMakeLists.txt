@@ -4,9 +4,8 @@ project(MonopolyProject CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(core/include)
+include_directories(core/include cli/include)
 
-# コアライブラリに AIPlayer.cpp を追加
 add_library(monopoly_core
     core/src/MonopolyEngine.cpp
     core/src/DataMaster.cpp
@@ -15,7 +14,6 @@ add_library(monopoly_core
 
 add_executable(monopoly_cli
     cli/src/main.cpp
-    cli/src/CliSetup.hpp
 )
 
 target_link_libraries(monopoly_cli PRIVATE monopoly_core)
