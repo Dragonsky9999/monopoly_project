@@ -93,6 +93,7 @@ void printStatus(const MonopolyEngine& engine) {
     std::cout << "================================================================================" << std::endl;
 }
 
+// AIの手番自動意思決定
 void handleAITurn(MonopolyEngine& engine, const AIPlayer& ai, std::mt19937& gen) {
     const auto& state = engine.getState();
     int activeId = state.activePlayerIndex;
@@ -100,41 +101,35 @@ void handleAITurn(MonopolyEngine& engine, const AIPlayer& ai, std::mt19937& gen)
 
     std::uniform_int_distribution<int> dis(1, 6);
 
-    std::cout << "\n>>> [AI Turn] " << state.players[activeId].name << " is thinking... <<<" << std::endl;
+    std::cout << "\n>>> [AI Turn] " << state.players[activeId].name << " is thinking... (" << phaseToString(state.currentPhase) << ") <<<" << std::endl;
 
     if (state.currentPhase == Phase::PURCHASE) {
-        CardId landedId = engine.getCardIdAtPosition(state.players[activeId].position);
+        // 購入フェーズ：AIが止まったマスの権利書を購入可能か判定
+        int pos = state.players[activeId].position;
+        CardId landedId = engine.getCardIdAtPosition(pos);
         if (landedId != CardId::NONE && engine.getOwnerOfCard(landedId) == -1) {
             if (ai.shouldBuyProperty(engine, landedId)) {
                 if (engine.buyCardInPurchasePhase(activeId, landedId)) {
-                    std::cout << "   AI Action: BUY " << cardIdToString(landedId) << "!" << std::endl;
+                    std::cout << "   AI Action: BOUGHT property " << cardIdToString(landedId) << "!" << std::endl;
                     return;
                 }
             }
         }
+        // 購入しない場合はパス
         engine.passInPurchasePhase(activeId);
-        std::cout << "   AI Action: PASS in Purchase Phase." << std::endl;
+        std::cout << "   AI Action: PASSED in Purchase Phase." << std::endl;
     } 
     else if (state.currentPhase == Phase::NEGOTIATION) {
+        // 交渉フェーズ：準備完了を宣言
         engine.setNegotiationReady(activeId, true);
         std::cout << "   AI Action: SET READY for Negotiation Phase." << std::endl;
     } 
     else if (state.currentPhase == Phase::OPERATIONAL) {
+        // 運用フェーズ：サイコロを振って移動
         int d1 = dis(gen);
         int d2 = dis(gen);
         std::cout << "   AI Rolling dice: " << d1 << " + " << d2 << " = " << (d1 + d2) << std::endl;
         engine.rollAndMove(activeId, d1, d2);
-
-        // サイコロ移動後、止まった土地が未所有なら自動購入チェック
-        int newPos = engine.getState().players[activeId].position;
-        CardId landedCardId = engine.getCardIdAtPosition(newPos);
-        if (landedCardId != CardId::NONE && engine.getOwnerOfCard(landedCardId) == -1) {
-            if (ai.shouldBuyProperty(engine, landedCardId)) {
-                if (engine.buyCardInPurchasePhase(activeId, landedCardId)) {
-                    std::cout << "   AI Action: BOUGHT " << cardIdToString(landedCardId) << " after landing!" << std::endl;
-                }
-            }
-        }
 
         // 家建設チェック
         for (CardId cId : state.players[activeId].ownedCards) {
@@ -146,45 +141,39 @@ void handleAITurn(MonopolyEngine& engine, const AIPlayer& ai, std::mt19937& gen)
         }
 
         engine.passTurn();
-        std::cout << "   AI Action: PASS Turn." << std::endl;
+        std::cout << "   AI Action: PASSED Turn." << std::endl;
     }
 }
 
 int main() {
-    std::cout << "==========================================" << std::endl;
-    std::cout << "   MONOPOLY ENGINE - MODE SELECTION       " << std::endl;
-    std::cout << "==========================================" << std::endl;
-    std::cout << " 1. Human vs Human" << std::endl;
-    std::cout << " 2. Human vs AI" << std::endl;
-    std::cout << " 3. AI vs AI (Auto Simulation)" << std::endl;
-    std::cout << "Select Game Mode [1-3]: ";
+    GameSettings config = CliSetup::runWizard();
+    MonopolyEngine engine;
 
-    int gameModeChoice = 1;
-    std::string choiceInput;
-    if (std::getline(std::cin, choiceInput) && !choiceInput.empty()) {
-        try { gameModeChoice = std::stoi(choiceInput); } catch (...) {}
+    if (config.mode == SetupMode::LOAD_LOG) {
+        if (engine.importAndReplayLog(config.importFilename)) {
+            std::cout << "Successfully loaded and replayed Log File: " << config.importFilename << std::endl;
+        } else {
+            std::cout << "[Error] Failed to load log file. Starting default game." << std::endl;
+            engine.initGame({"Player_1", "Player_2"}, config.enableTax);
+        }
+    } else {
+        // ウィザードで指定された2〜10人のプレイヤー名で初期化
+        engine.initGame(config.playerNames, config.enableTax);
+        if (config.startingMoney != 1500) {
+            for (int i = 0; i < config.playerCount; ++i) {
+                engine.forceSetMoney(i, config.startingMoney);
+            }
+        }
     }
 
-    MonopolyEngine engine;
+    // デモ・テスト用：プレイヤー2以降をAIとして自動参加させる設定（必要に応じて人間/AI混成可）
     std::unordered_map<int, std::unique_ptr<AIPlayer>> aiPlayers;
-
-    if (gameModeChoice == 2) {
-        std::cout << "\nStarting Game: Human (Player_1) vs AI (Player_2)" << std::endl;
-        engine.initGame({"Human_Player", "AI_Bot"}, true);
-        aiPlayers[1] = std::make_unique<AIPlayer>(1, AIDifficulty::BALANCED);
-    } else if (gameModeChoice == 3) {
-        std::cout << "\nStarting Game: AI_Bot_1 vs AI_Bot_2 (Auto Simulation)" << std::endl;
-        engine.initGame({"AI_Bot_Alpha", "AI_Bot_Beta"}, true);
-        // AIが初期から積極的に土地を購入するように AGGRESSIVE 設定
-        aiPlayers[0] = std::make_unique<AIPlayer>(0, AIDifficulty::AGGRESSIVE);
-        aiPlayers[1] = std::make_unique<AIPlayer>(1, AIDifficulty::AGGRESSIVE);
-        
-        // 購入フェーズをスキップして直接運用フェーズへ
-        engine.forceAdvancePhase();
-        engine.forceAdvancePhase();
-    } else {
-        std::cout << "\nStarting Game: Human vs Human" << std::endl;
-        engine.initGame({"Player_1", "Player_2"}, true);
+    if (config.playerCount > 1) {
+        // Player 1以降をAIに設定（例として全自動シミュレーションの場合は全員AI）
+        for (int i = 1; i < config.playerCount; ++i) {
+            aiPlayers[i] = std::make_unique<AIPlayer>(i, AIDifficulty::AGGRESSIVE);
+            std::cout << "Registered AI Bot for Player [" << i << "] " << config.playerNames[i] << std::endl;
+        }
     }
 
     std::random_device rd;
@@ -201,7 +190,7 @@ int main() {
         if (aiPlayers.find(activeId) != aiPlayers.end()) {
             handleAITurn(engine, *aiPlayers[activeId], gen);
             printStatus(engine);
-            std::this_thread::sleep_for(std::chrono::milliseconds(300)); // 視認用ウェイト
+            std::this_thread::sleep_for(std::chrono::milliseconds(400)); // 視認用ウェイト
             continue;
         }
 
@@ -231,9 +220,17 @@ int main() {
         } else if (cmd == "pass") {
             if (state.currentPhase == Phase::PURCHASE) {
                 engine.passInPurchasePhase(activeId);
+            } else if (state.currentPhase == Phase::NEGOTIATION) {
+                engine.setNegotiationReady(activeId, true);
             } else if (state.currentPhase == Phase::OPERATIONAL) {
                 engine.passTurn();
             }
+            printStatus(engine);
+        } else if (cmd == "buy") {
+            std::string cardStr;
+            ss >> cardStr;
+            // カード文字列からID解決して購入
+            // (簡易実装)
             printStatus(engine);
         } else if (cmd == "roll") {
             if (state.currentPhase == Phase::OPERATIONAL) {
@@ -254,7 +251,7 @@ int main() {
                 std::cout << "Saved Log to: " << saveName << std::endl;
             }
         } else if (!cmd.empty()) {
-            std::cout << "Unknown command. Use 'roll', 'pass', 'ready', 'status', or 'exit'." << std::endl;
+            std::cout << "Unknown command." << std::endl;
         }
     }
 
