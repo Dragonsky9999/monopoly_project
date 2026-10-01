@@ -188,16 +188,23 @@ int main() {
     GameSettings config = CliSetup::runWizard();
     MonopolyEngine engine;
 
-    engine.initGame(config.playerNames, config.enableTax);
-    if (config.startingMoney != 1500) {
-        for (int i = 0; i < config.playerCount; ++i) {
-            engine.forceSetMoney(i, config.startingMoney);
+    if (config.mode == SetupMode::LOAD_LOG) {
+        if (engine.importAndReplayLog(config.importFilename)) {
+            std::cout << "Successfully loaded and replayed Log File: " << config.importFilename << std::endl;
+        } else {
+            std::cout << "[Error] Failed to load log file. Starting default game." << std::endl;
+            engine.initGame({"Player_1", "Player_2"}, config.enableTax);
         }
+    } else {
+        engine.initGame(config.playerNames, config.enableTax);
     }
 
+    // プレイヤー名に "AI" が含まれる場合、自動的に AIPlayer として登録
     std::unordered_map<int, std::unique_ptr<AIPlayer>> aiPlayers;
-    if (config.playerCount > 1) {
-        for (int i = 1; i < config.playerCount; ++i) {
+    for (int i = 0; i < config.playerCount; ++i) {
+        std::string upperName = config.playerNames[i];
+        std::transform(upperName.begin(), upperName.end(), upperName.begin(), ::toupper);
+        if (upperName.find("AI") != std::string::npos || upperName.find("BOT") != std::string::npos) {
             aiPlayers[i] = std::make_unique<AIPlayer>(i, AIDifficulty::BALANCED);
             std::cout << "Registered AI Bot for Player [" << i << "] " << config.playerNames[i] << std::endl;
         }
@@ -282,7 +289,7 @@ int main() {
                 engine.setNegotiationReady(activeId, true);
                 printStatus(engine);
             }
-        } else if (cmd == "save" || cmd == "export") {
+        } else if (cmd == "save" / * cmd == "export" */) {
             std::string saveName = generateTimestampedFilename();
             if (engine.exportLog(saveName)) {
                 std::cout << "Saved Log to: " << saveName << std::endl;

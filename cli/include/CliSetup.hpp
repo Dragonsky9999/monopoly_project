@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
+#include <algorithm>
 
 enum class SetupMode {
     NEW_GAME,
@@ -22,9 +24,50 @@ class CliSetup {
 public:
     static GameSettings runWizard() {
         GameSettings settings;
-        settings.mode = SetupMode::NEW_GAME;
-        settings.playerCount = 2;
-        settings.playerNames = {"Player_1", "Player_2"};
+        std::cout << "================================================================================" << std::endl;
+        std::cout << "                  MONOPOLY CLI - SETUP WIZARD                                   " << std::endl;
+        std::cout << "================================================================================" << std::endl;
+        std::cout << " [1] New Game" << std::endl;
+        std::cout << " [2] Load & Replay Log File" << std::endl;
+        std::cout << "Select Mode [1-2] (default 1): ";
+
+        std::string line;
+        if (std::getline(std::cin, line) && !line.empty()) {
+            if (line == "2") {
+                settings.mode = SetupMode::LOAD_LOG;
+                std::cout << "Enter log filename to load: ";
+                std::getline(std::cin, settings.importFilename);
+                return settings;
+            }
+        }
+
+        std::cout << "\nEnter number of players (2 - 10): ";
+        if (std::getline(std::cin, line) && !line.empty()) {
+            try {
+                int count = std::stoi(line);
+                if (count >= 2 && count <= 10) {
+                    settings.playerCount = count;
+                }
+            } catch (...) {}
+        }
+
+        settings.playerNames.clear();
+        for (int i = 0; i < settings.playerCount; ++i) {
+            std::cout << "Enter name for Player " << (i + 1) << " (default: Player_" << (i + 1) << "): ";
+            if (std::getline(std::cin, line) && !line.empty()) {
+                settings.playerNames.push_back(line);
+            } else {
+                settings.playerNames.push_back("Player_" + std::to_string(i + 1));
+            }
+        }
+
+        std::cout << "Enable Tax squares? (y/n, default y): ";
+        if (std::getline(std::cin, line) && !line.empty()) {
+            char c = std::tolower(line[0]);
+            if (c == 'n') settings.enableTax = false;
+        }
+
+        std::cout << "\nSetup completed successfully! Starting game...\n" << std::endl;
         return settings;
     }
 };
