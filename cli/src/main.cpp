@@ -34,13 +34,40 @@ std::string toLower(std::string str) {
     return str;
 }
 
-std::string phaseToString(Phase p) {
-    switch (p) {
-        case Phase::PURCHASE: return "PURCHASE";
-        case Phase::NEGOTIATION: return "NEGOTIATION";
-        case Phase::OPERATIONAL: return "OPERATIONAL";
-    }
-    return "UNKNOWN";
+CardId parseCardId(const std::string& name) {
+    std::string s = name;
+    std::transform(s.begin(), s.end(), s.begin(), [](char c){
+        return static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+    });
+    if (s == "P-BR1" || s == "P_BR1") return CardId::P_BR1;
+    if (s == "P-BR2" || s == "P_BR2") return CardId::P_BR2;
+    if (s == "P-LB1" || s == "P_LB1") return CardId::P_LB1;
+    if (s == "P-LB2" || s == "P_LB2") return CardId::P_LB2;
+    if (s == "P-LB3" || s == "P_LB3") return CardId::P_LB3;
+    if (s == "P-PK1" || s == "P_PK1") return CardId::P_PK1;
+    if (s == "P-PK2" || s == "P_PK2") return CardId::P_PK2;
+    if (s == "P-PK3" || s == "P_PK3") return CardId::P_PK3;
+    if (s == "P-OR1" || s == "P_OR1") return CardId::P_OR1;
+    if (s == "P-OR2" || s == "P_OR2") return CardId::P_OR2;
+    if (s == "P-OR3" || s == "P_OR3") return CardId::P_OR3;
+    if (s == "P-RD1" || s == "P_RD1") return CardId::P_RD1;
+    if (s == "P-RD2" || s == "P_RD2") return CardId::P_RD2;
+    if (s == "P-RD3" || s == "P_RD3") return CardId::P_RD3;
+    if (s == "P-YL1" || s == "P_YL1") return CardId::P_YL1;
+    if (s == "P-YL2" || s == "P_YL2") return CardId::P_YL2;
+    if (s == "P-YL3" || s == "P_YL3") return CardId::P_YL3;
+    if (s == "P-GR1" || s == "P_GR1") return CardId::P_GR1;
+    if (s == "P-GR2" || s == "P_GR2") return CardId::P_GR2;
+    if (s == "P-GR3" || s == "P_GR3") return CardId::P_GR3;
+    if (s == "P-DB1" || s == "P_DB1") return CardId::P_DB1;
+    if (s == "P-DB2" || s == "P_DB2") return CardId::P_DB2;
+    if (s == "R-READING" || s == "R_READING") return CardId::R_READING;
+    if (s == "R-PENNSYLVANIA" || s == "R_PENNSYLVANIA") return CardId::R_PENNSYLVANIA;
+    if (s == "R-B-AND-O" || s == "R_B_AND_O") return CardId::R_B_AND_O;
+    if (s == "R-SHORT-LINE" || s == "R_SHORT_LINE") return CardId::R_SHORT_LINE;
+    if (s == "U-ELECTRIC" || s == "U_ELECTRIC") return CardId::U_ELECTRIC;
+    if (s == "U-WATER" || s == "U_WATER") return CardId::U_WATER;
+    return CardId::NONE;
 }
 
 std::string cardIdToString(CardId id) {
@@ -58,6 +85,15 @@ std::string cardIdToString(CardId id) {
         case CardId::U_ELECTRIC: return "U-ELECTRIC"; case CardId::U_WATER: return "U-WATER";
         default: return "NONE";
     }
+}
+
+std::string phaseToString(Phase p) {
+    switch (p) {
+        case Phase::PURCHASE: return "PURCHASE";
+        case Phase::NEGOTIATION: return "NEGOTIATION";
+        case Phase::OPERATIONAL: return "OPERATIONAL";
+    }
+    return "UNKNOWN";
 }
 
 void printStatus(const MonopolyEngine& engine) {
@@ -93,49 +129,52 @@ void printStatus(const MonopolyEngine& engine) {
     std::cout << "================================================================================" << std::endl;
 }
 
-// AIの手番自動意思決定
 void handleAITurn(MonopolyEngine& engine, const AIPlayer& ai, std::mt19937& gen) {
     const auto& state = engine.getState();
     int activeId = state.activePlayerIndex;
     if (activeId != ai.getPlayerId()) return;
 
     std::uniform_int_distribution<int> dis(1, 6);
-
     std::cout << "\n>>> [AI Turn] " << state.players[activeId].name << " is thinking... (" << phaseToString(state.currentPhase) << ") <<<" << std::endl;
 
     if (state.currentPhase == Phase::PURCHASE) {
-        // 購入フェーズ：AIが止まったマスの権利書を購入可能か判定
         int pos = state.players[activeId].position;
         CardId landedId = engine.getCardIdAtPosition(pos);
         if (landedId != CardId::NONE && engine.getOwnerOfCard(landedId) == -1) {
             if (ai.shouldBuyProperty(engine, landedId)) {
                 if (engine.buyCardInPurchasePhase(activeId, landedId)) {
-                    std::cout << "   AI Action: BOUGHT property " << cardIdToString(landedId) << "!" << std::endl;
+                    std::cout << "   AI Action: BOUGHT " << cardIdToString(landedId) << "!" << std::endl;
                     return;
                 }
             }
         }
-        // 購入しない場合はパス
         engine.passInPurchasePhase(activeId);
         std::cout << "   AI Action: PASSED in Purchase Phase." << std::endl;
     } 
     else if (state.currentPhase == Phase::NEGOTIATION) {
-        // 交渉フェーズ：準備完了を宣言
         engine.setNegotiationReady(activeId, true);
-        std::cout << "   AI Action: SET READY for Negotiation Phase." << std::endl;
+        std::cout << "   AI Action: SET READY for Negotiation." << std::endl;
     } 
     else if (state.currentPhase == Phase::OPERATIONAL) {
-        // 運用フェーズ：サイコロを振って移動
         int d1 = dis(gen);
         int d2 = dis(gen);
         std::cout << "   AI Rolling dice: " << d1 << " + " << d2 << " = " << (d1 + d2) << std::endl;
         engine.rollAndMove(activeId, d1, d2);
 
-        // 家建設チェック
+        int newPos = engine.getState().players[activeId].position;
+        CardId landedCardId = engine.getCardIdAtPosition(newPos);
+        if (landedCardId != CardId::NONE && engine.getOwnerOfCard(landedCardId) == -1) {
+            if (ai.shouldBuyProperty(engine, landedCardId)) {
+                if (engine.buyCardInPurchasePhase(activeId, landedCardId)) {
+                    std::cout << "   AI Action: BOUGHT " << cardIdToString(landedCardId) << " after move!" << std::endl;
+                }
+            }
+        }
+
         for (CardId cId : state.players[activeId].ownedCards) {
             if (ai.shouldBuildHouse(engine, cId)) {
                 if (engine.buildHouse(activeId, cId)) {
-                    std::cout << "   AI Action: BUILT 1 house on " << cardIdToString(cId) << "!" << std::endl;
+                    std::cout << "   AI Action: BUILT house on " << cardIdToString(cId) << "!" << std::endl;
                 }
             }
         }
@@ -149,29 +188,17 @@ int main() {
     GameSettings config = CliSetup::runWizard();
     MonopolyEngine engine;
 
-    if (config.mode == SetupMode::LOAD_LOG) {
-        if (engine.importAndReplayLog(config.importFilename)) {
-            std::cout << "Successfully loaded and replayed Log File: " << config.importFilename << std::endl;
-        } else {
-            std::cout << "[Error] Failed to load log file. Starting default game." << std::endl;
-            engine.initGame({"Player_1", "Player_2"}, config.enableTax);
-        }
-    } else {
-        // ウィザードで指定された2〜10人のプレイヤー名で初期化
-        engine.initGame(config.playerNames, config.enableTax);
-        if (config.startingMoney != 1500) {
-            for (int i = 0; i < config.playerCount; ++i) {
-                engine.forceSetMoney(i, config.startingMoney);
-            }
+    engine.initGame(config.playerNames, config.enableTax);
+    if (config.startingMoney != 1500) {
+        for (int i = 0; i < config.playerCount; ++i) {
+            engine.forceSetMoney(i, config.startingMoney);
         }
     }
 
-    // デモ・テスト用：プレイヤー2以降をAIとして自動参加させる設定（必要に応じて人間/AI混成可）
     std::unordered_map<int, std::unique_ptr<AIPlayer>> aiPlayers;
     if (config.playerCount > 1) {
-        // Player 1以降をAIに設定（例として全自動シミュレーションの場合は全員AI）
         for (int i = 1; i < config.playerCount; ++i) {
-            aiPlayers[i] = std::make_unique<AIPlayer>(i, AIDifficulty::AGGRESSIVE);
+            aiPlayers[i] = std::make_unique<AIPlayer>(i, AIDifficulty::BALANCED);
             std::cout << "Registered AI Bot for Player [" << i << "] " << config.playerNames[i] << std::endl;
         }
     }
@@ -186,15 +213,13 @@ int main() {
         const auto& state = engine.getState();
         int activeId = state.activePlayerIndex;
 
-        // 現在の手番がAIの場合
         if (aiPlayers.find(activeId) != aiPlayers.end()) {
             handleAITurn(engine, *aiPlayers[activeId], gen);
             printStatus(engine);
-            std::this_thread::sleep_for(std::chrono::milliseconds(400)); // 視認用ウェイト
+            std::this_thread::sleep_for(std::chrono::milliseconds(400));
             continue;
         }
 
-        // 人間プレイヤーの手番入力
         std::cout << "\n[" << state.players[activeId].name << " (" << phaseToString(state.currentPhase) << ")]> ";
         if (!std::getline(std::cin, line)) {
             std::string autoSaveName = generateTimestampedFilename();
@@ -220,6 +245,7 @@ int main() {
         } else if (cmd == "pass") {
             if (state.currentPhase == Phase::PURCHASE) {
                 engine.passInPurchasePhase(activeId);
+                std::cout << "Passed purchase phase for " << state.players[activeId].name << std::endl;
             } else if (state.currentPhase == Phase::NEGOTIATION) {
                 engine.setNegotiationReady(activeId, true);
             } else if (state.currentPhase == Phase::OPERATIONAL) {
@@ -228,9 +254,20 @@ int main() {
             printStatus(engine);
         } else if (cmd == "buy") {
             std::string cardStr;
-            ss >> cardStr;
-            // カード文字列からID解決して購入
-            // (簡易実装)
+            if (ss >> cardStr) {
+                CardId cId = parseCardId(cardStr);
+                if (cId != CardId::NONE) {
+                    if (engine.buyCardInPurchasePhase(activeId, cId)) {
+                        std::cout << "Successfully bought " << cardStr << "!" << std::endl;
+                    } else {
+                        std::cout << "[Error] Cannot buy " << cardStr << " (Not at this position, already owned, or insufficient funds)." << std::endl;
+                    }
+                } else {
+                    std::cout << "[Error] Invalid card ID: " << cardStr << std::endl;
+                }
+            } else {
+                std::cout << "[Error] Specify card ID to buy (e.g., buy P-BR1)." << std::endl;
+            }
             printStatus(engine);
         } else if (cmd == "roll") {
             if (state.currentPhase == Phase::OPERATIONAL) {
