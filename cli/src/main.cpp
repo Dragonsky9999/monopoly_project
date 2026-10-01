@@ -7,6 +7,22 @@
 #include <random>
 #include <algorithm>
 #include <cctype>
+#include <chrono>
+#include <iomanip>
+
+std::string generateTimestampedFilename() {
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::tm buf;
+#if defined(_WIN32)
+    localtime_s(&buf, &in_time_t);
+#else
+    localtime_r(&in_time_t, &buf);
+#endif
+    std::ostringstream ss;
+    ss << "monopoly_log_" << std::put_time(&buf, "%Y%m%d_%H%M%S") << ".log";
+    return ss.str();
+}
 
 std::string toLower(std::string str) {
     std::transform(str.begin(), str.end(), str.begin(), [](char c){
@@ -39,19 +55,50 @@ CardId parseCardId(const std::string& name) {
     std::transform(s.begin(), s.end(), s.begin(), [](char c){
         return static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
     });
-    if (s == "P-BR1") return CardId::P_BR1;
-    if (s == "P-BR2") return CardId::P_BR2;
-    if (s == "P-DB1") return CardId::P_DB1;
-    if (s == "P-DB2") return CardId::P_DB2;
+    if (s == "P-BR1" || s == "P_BR1") return CardId::P_BR1;
+    if (s == "P-BR2" || s == "P_BR2") return CardId::P_BR2;
+    if (s == "P-LB1" || s == "P_LB1") return CardId::P_LB1;
+    if (s == "P-LB2" || s == "P_LB2") return CardId::P_LB2;
+    if (s == "P-LB3" || s == "P_LB3") return CardId::P_LB3;
+    if (s == "P-PK1" || s == "P_PK1") return CardId::P_PK1;
+    if (s == "P-PK2" || s == "P_PK2") return CardId::P_PK2;
+    if (s == "P-PK3" || s == "P_PK3") return CardId::P_PK3;
+    if (s == "P-OR1" || s == "P_OR1") return CardId::P_OR1;
+    if (s == "P-OR2" || s == "P_OR2") return CardId::P_OR2;
+    if (s == "P-OR3" || s == "P_OR3") return CardId::P_OR3;
+    if (s == "P-RD1" || s == "P_RD1") return CardId::P_RD1;
+    if (s == "P-RD2" || s == "P_RD2") return CardId::P_RD2;
+    if (s == "P-RD3" || s == "P_RD3") return CardId::P_RD3;
+    if (s == "P-YL1" || s == "P_YL1") return CardId::P_YL1;
+    if (s == "P-YL2" || s == "P_YL2") return CardId::P_YL2;
+    if (s == "P-YL3" || s == "P_YL3") return CardId::P_YL3;
+    if (s == "P-GR1" || s == "P_GR1") return CardId::P_GR1;
+    if (s == "P-GR2" || s == "P_GR2") return CardId::P_GR2;
+    if (s == "P-GR3" || s == "P_GR3") return CardId::P_GR3;
+    if (s == "P-DB1" || s == "P_DB1") return CardId::P_DB1;
+    if (s == "P-DB2" || s == "P_DB2") return CardId::P_DB2;
+    if (s == "R-READING" || s == "R_READING") return CardId::R_READING;
+    if (s == "R-PENNSYLVANIA" || s == "R_PENNSYLVANIA") return CardId::R_PENNSYLVANIA;
+    if (s == "R-B-AND-O" || s == "R_B_AND_O") return CardId::R_B_AND_O;
+    if (s == "R-SHORT-LINE" || s == "R_SHORT_LINE") return CardId::R_SHORT_LINE;
+    if (s == "U-ELECTRIC" || s == "U_ELECTRIC") return CardId::U_ELECTRIC;
+    if (s == "U-WATER" || s == "U_WATER") return CardId::U_WATER;
     return CardId::NONE;
 }
 
 std::string cardIdToString(CardId id) {
     switch(id) {
-        case CardId::P_BR1: return "P-BR1";
-        case CardId::P_BR2: return "P-BR2";
-        case CardId::P_DB1: return "P-DB1";
-        case CardId::P_DB2: return "P-DB2";
+        case CardId::P_BR1: return "P-BR1"; case CardId::P_BR2: return "P-BR2";
+        case CardId::P_LB1: return "P-LB1"; case CardId::P_LB2: return "P-LB2"; case CardId::P_LB3: return "P-LB3";
+        case CardId::P_PK1: return "P-PK1"; case CardId::P_PK2: return "P-PK2"; case CardId::P_PK3: return "P-PK3";
+        case CardId::P_OR1: return "P-OR1"; case CardId::P_OR2: return "P-OR2"; case CardId::P_OR3: return "P-OR3";
+        case CardId::P_RD1: return "P-RD1"; case CardId::P_RD2: return "P-RD2"; case CardId::P_RD3: return "P-RD3";
+        case CardId::P_YL1: return "P-YL1"; case CardId::P_YL2: return "P-YL2"; case CardId::P_YL3: return "P-YL3";
+        case CardId::P_GR1: return "P-GR1"; case CardId::P_GR2: return "P-GR2"; case CardId::P_GR3: return "P-GR3";
+        case CardId::P_DB1: return "P-DB1"; case CardId::P_DB2: return "P-DB2";
+        case CardId::R_READING: return "R-READING"; case CardId::R_PENNSYLVANIA: return "R-PENNSYLVANIA";
+        case CardId::R_B_AND_O: return "R-B-AND-O"; case CardId::R_SHORT_LINE: return "R-SHORT-LINE";
+        case CardId::U_ELECTRIC: return "U-ELECTRIC"; case CardId::U_WATER: return "U-WATER";
         default: return "NONE";
     }
 }
@@ -177,7 +224,12 @@ int main() {
     std::uniform_int_distribution<int> dis(1, 6);
 
     std::vector<CardId> allCards = {
-        CardId::P_BR1, CardId::P_BR2, CardId::P_DB1, CardId::P_DB2
+        CardId::P_BR1, CardId::P_BR2, CardId::P_LB1, CardId::P_LB2, CardId::P_LB3,
+        CardId::P_PK1, CardId::P_PK2, CardId::P_PK3, CardId::P_OR1, CardId::P_OR2, CardId::P_OR3,
+        CardId::P_RD1, CardId::P_RD2, CardId::P_RD3, CardId::P_YL1, CardId::P_YL2, CardId::P_YL3,
+        CardId::P_GR1, CardId::P_GR2, CardId::P_GR3, CardId::P_DB1, CardId::P_DB2,
+        CardId::R_READING, CardId::R_PENNSYLVANIA, CardId::R_B_AND_O, CardId::R_SHORT_LINE,
+        CardId::U_ELECTRIC, CardId::U_WATER
     };
 
     printStatus(engine);
@@ -199,7 +251,9 @@ int main() {
             break;
         } else if (cmd == "save" || cmd == "export") {
             std::string saveName;
-            if (!(ss >> saveName)) saveName = "monopoly_saved.log";
+            if (!(ss >> saveName)) {
+                saveName = generateTimestampedFilename();
+            }
             if (engine.exportLog(saveName)) {
                 std::cout << "Successfully saved Deterministic Log File to: " << saveName << std::endl;
             } else {
@@ -219,7 +273,7 @@ int main() {
                     std::cout << "[Error] Unknown player: " << targetArg << std::endl;
                 }
             } else {
-                std::cout << "\n--- 全カード売り出し・所有ステータス ---" << std::endl;
+                std::cout << "\n--- 全28枚カード売り出し・所有ステータス ---" << std::endl;
                 for (CardId cId : allCards) {
                     const auto& card = engine.getCard(cId);
                     int owner = -1;
@@ -388,6 +442,28 @@ int main() {
                 engine.forceAdvancePhase();
                 std::cout << "Phase forced to advance." << std::endl;
                 printStatus(engine);
+            } else if (subCmd == "money") {
+                std::string targetStr;
+                int newMoney = 0;
+                ss >> targetStr >> newMoney;
+                int targetId = resolvePlayerId(targetStr, state.players);
+                if (targetId != -1 && engine.forceSetMoney(targetId, newMoney)) {
+                    std::cout << "Money set to " << newMoney << " for " << state.players[targetId].name << std::endl;
+                    printStatus(engine);
+                } else {
+                    std::cout << "[Error] Admin set money failed." << std::endl;
+                }
+            } else if (subCmd == "owner") {
+                std::string cardStr, targetStr;
+                ss >> cardStr >> targetStr;
+                CardId cId = parseCardId(cardStr);
+                int targetId = resolvePlayerId(targetStr, state.players);
+                if (engine.forceSetCardOwner(cId, targetId)) {
+                    std::cout << "Card owner changed successfully." << std::endl;
+                    printStatus(engine);
+                } else {
+                    std::cout << "[Error] Admin set owner failed." << std::endl;
+                }
             }
         } else if (cmd == "undo") {
             if (engine.undo()) {

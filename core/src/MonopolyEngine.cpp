@@ -11,8 +11,32 @@ namespace {
         switch (id) {
             case CardId::P_BR1: return "P-BR1";
             case CardId::P_BR2: return "P-BR2";
+            case CardId::P_LB1: return "P-LB1";
+            case CardId::P_LB2: return "P-LB2";
+            case CardId::P_LB3: return "P-LB3";
+            case CardId::P_PK1: return "P-PK1";
+            case CardId::P_PK2: return "P-PK2";
+            case CardId::P_PK3: return "P-PK3";
+            case CardId::P_OR1: return "P-OR1";
+            case CardId::P_OR2: return "P-OR2";
+            case CardId::P_OR3: return "P-OR3";
+            case CardId::P_RD1: return "P-RD1";
+            case CardId::P_RD2: return "P-RD2";
+            case CardId::P_RD3: return "P-RD3";
+            case CardId::P_YL1: return "P-YL1";
+            case CardId::P_YL2: return "P-YL2";
+            case CardId::P_YL3: return "P-YL3";
+            case CardId::P_GR1: return "P-GR1";
+            case CardId::P_GR2: return "P-GR2";
+            case CardId::P_GR3: return "P-GR3";
             case CardId::P_DB1: return "P-DB1";
             case CardId::P_DB2: return "P-DB2";
+            case CardId::R_READING: return "R-READING";
+            case CardId::R_PENNSYLVANIA: return "R-PENNSYLVANIA";
+            case CardId::R_B_AND_O: return "R-B-AND-O";
+            case CardId::R_SHORT_LINE: return "R-SHORT-LINE";
+            case CardId::U_ELECTRIC: return "U-ELECTRIC";
+            case CardId::U_WATER: return "U-WATER";
             default: return std::to_string(static_cast<int>(id));
         }
     }
@@ -20,8 +44,32 @@ namespace {
     CardId stringToCardId(const std::string& str) {
         if (str == "P-BR1") return CardId::P_BR1;
         if (str == "P-BR2") return CardId::P_BR2;
+        if (str == "P-LB1") return CardId::P_LB1;
+        if (str == "P-LB2") return CardId::P_LB2;
+        if (str == "P-LB3") return CardId::P_LB3;
+        if (str == "P-PK1") return CardId::P_PK1;
+        if (str == "P-PK2") return CardId::P_PK2;
+        if (str == "P-PK3") return CardId::P_PK3;
+        if (str == "P-OR1") return CardId::P_OR1;
+        if (str == "P-OR2") return CardId::P_OR2;
+        if (str == "P-OR3") return CardId::P_OR3;
+        if (str == "P-RD1") return CardId::P_RD1;
+        if (str == "P-RD2") return CardId::P_RD2;
+        if (str == "P-RD3") return CardId::P_RD3;
+        if (str == "P-YL1") return CardId::P_YL1;
+        if (str == "P-YL2") return CardId::P_YL2;
+        if (str == "P-YL3") return CardId::P_YL3;
+        if (str == "P-GR1") return CardId::P_GR1;
+        if (str == "P-GR2") return CardId::P_GR2;
+        if (str == "P-GR3") return CardId::P_GR3;
         if (str == "P-DB1") return CardId::P_DB1;
         if (str == "P-DB2") return CardId::P_DB2;
+        if (str == "R-READING") return CardId::R_READING;
+        if (str == "R-PENNSYLVANIA") return CardId::R_PENNSYLVANIA;
+        if (str == "R-B-AND-O") return CardId::R_B_AND_O;
+        if (str == "R-SHORT-LINE") return CardId::R_SHORT_LINE;
+        if (str == "U-ELECTRIC") return CardId::U_ELECTRIC;
+        if (str == "U-WATER") return CardId::U_WATER;
         try {
             int val = std::stoi(str);
             return static_cast<CardId>(val);
