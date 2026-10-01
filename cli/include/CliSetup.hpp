@@ -14,7 +14,7 @@ enum class SetupMode {
 struct GameSettings {
     SetupMode mode = SetupMode::NEW_GAME;
     int playerCount = 2;
-    std::vector<std::string> playerNames = {"Player_1", "AI_Bot_2"};
+    std::vector<std::string> playerNames = {"Player", "AI_2"};
     int startingMoney = 1500;
     bool enableTax = true;
     bool enableGoBonus = true;
@@ -53,13 +53,33 @@ public:
         }
 
         settings.playerNames.clear();
+        int humanCount = 0;
+        int aiCount = 0;
+
         for (int i = 0; i < settings.playerCount; ++i) {
-            std::string defaultName = (i == 0) ? "Player_1" : ("AI_Bot_" + std::to_string(i + 1));
-            std::cout << "Enter name for Player " << (i + 1) << " (e.g. Player_1 or AI_Bot_2, default: " << defaultName << "): ";
-            if (std::getline(std::cin, line) && !line.empty()) {
-                settings.playerNames.push_back(line);
+            std::string defaultHint = (i == 0) ? "Player" : "AI_";
+            std::cout << "Enter name for Player " << (i + 1) << " (e.g. Player or AI_, default: " << defaultHint << "): ";
+            
+            if (std::getline(std::cin, line)) {
+                // 前後の空白トリム
+                line.erase(line.begin(), std::find_if(line.begin(), line.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+                line.erase(std::find_if(line.rbegin(), line.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), line.end());
+
+                if (line.empty()) {
+                    // 空白の場合、裏で勝手に連番を付与
+                    if (i == 0) {
+                        humanCount++;
+                        settings.playerNames.push_back("Player" + (humanCount > 1 ? " " + std::to_string(humanCount) : ""));
+                    } else {
+                        aiCount++;
+                        settings.playerNames.push_back("AI_" + std::to_string(aiCount + 1));
+                    }
+                } else {
+                    settings.playerNames.push_back(line);
+                }
             } else {
-                settings.playerNames.push_back(defaultName);
+                if (i == 0) settings.playerNames.push_back("Player");
+                else settings.playerNames.push_back("AI_" + std::to_string(i + 1));
             }
         }
 
