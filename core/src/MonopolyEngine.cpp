@@ -1,843 +1,784 @@
 ﻿#include "MonopolyEngine.hpp"
-#include "TradeOffer.hpp"
 #include <algorithm>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <cctype>
+#include <set>
 
 namespace {
-    std::string cardIdToString(CardId id) {
-        switch (id) {
-            case CardId::P_BR1: return "P-BR1";
-            case CardId::P_BR2: return "P-BR2";
-            case CardId::P_LB1: return "P-LB1";
-            case CardId::P_LB2: return "P-LB2";
-            case CardId::P_LB3: return "P-LB3";
-            case CardId::P_PK1: return "P-PK1";
-            case CardId::P_PK2: return "P-PK2";
-            case CardId::P_PK3: return "P-PK3";
-            case CardId::P_OR1: return "P-OR1";
-            case CardId::P_OR2: return "P-OR2";
-            case CardId::P_OR3: return "P-OR3";
-            case CardId::P_RD1: return "P-RD1";
-            case CardId::P_RD2: return "P-RD2";
-            case CardId::P_RD3: return "P-RD3";
-            case CardId::P_YL1: return "P-YL1";
-            case CardId::P_YL2: return "P-YL2";
-            case CardId::P_YL3: return "P-YL3";
-            case CardId::P_GR1: return "P-GR1";
-            case CardId::P_GR2: return "P-GR2";
-            case CardId::P_GR3: return "P-GR3";
-            case CardId::P_DB1: return "P-DB1";
-            case CardId::P_DB2: return "P-DB2";
-            case CardId::R_READING: return "R-READING";
-            case CardId::R_PENNSYLVANIA: return "R-PENNSYLVANIA";
-            case CardId::R_B_AND_O: return "R-B-AND-O";
-            case CardId::R_SHORT_LINE: return "R-SHORT-LINE";
-            case CardId::U_ELECTRIC: return "U-ELECTRIC";
-            case CardId::U_WATER: return "U-WATER";
-            default: return std::to_string(static_cast<int>(id));
-        }
-    }
 
-    CardId stringToCardId(const std::string& str) {
-        if (str == "P-BR1") return CardId::P_BR1;
-        if (str == "P-BR2") return CardId::P_BR2;
-        if (str == "P-LB1") return CardId::P_LB1;
-        if (str == "P-LB2") return CardId::P_LB2;
-        if (str == "P-LB3") return CardId::P_LB3;
-        if (str == "P-PK1") return CardId::P_PK1;
-        if (str == "P-PK2") return CardId::P_PK2;
-        if (str == "P-PK3") return CardId::P_PK3;
-        if (str == "P-OR1") return CardId::P_OR1;
-        if (str == "P-OR2") return CardId::P_OR2;
-        if (str == "P-OR3") return CardId::P_OR3;
-        if (str == "P-RD1") return CardId::P_RD1;
-        if (str == "P-RD2") return CardId::P_RD2;
-        if (str == "P-RD3") return CardId::P_RD3;
-        if (str == "P-YL1") return CardId::P_YL1;
-        if (str == "P-YL2") return CardId::P_YL2;
-        if (str == "P-YL3") return CardId::P_YL3;
-        if (str == "P-GR1") return CardId::P_GR1;
-        if (str == "P-GR2") return CardId::P_GR2;
-        if (str == "P-GR3") return CardId::P_GR3;
-        if (str == "P-DB1") return CardId::P_DB1;
-        if (str == "P-DB2") return CardId::P_DB2;
-        if (str == "R-READING") return CardId::R_READING;
-        if (str == "R-PENNSYLVANIA") return CardId::R_PENNSYLVANIA;
-        if (str == "R-B-AND-O") return CardId::R_B_AND_O;
-        if (str == "R-SHORT-LINE") return CardId::R_SHORT_LINE;
-        if (str == "U-ELECTRIC") return CardId::U_ELECTRIC;
-        if (str == "U-WATER") return CardId::U_WATER;
-        try {
-            int val = std::stoi(str);
-            return static_cast<CardId>(val);
-        } catch (...) {
-            return CardId::NONE;
-        }
+using DataMaster::BOARD_SIZE;
+using DataMaster::SquareType;
+
+bool validPlayer(const GameState& s, int p) { return p >= 0 && p < static_cast<int>(s.players.size()); }
+bool alivePlayer(const GameState& s, int p) { return validPlayer(s, p) && !s.players[p].bankrupt; }
+bool validCard(CardId c) { return cardIndex(c) >= 0 && cardIndex(c) < CARD_COUNT; }
+
+// from の次の生存プレイヤー（from = -1 で先頭の生存者）
+int nextAlive(const GameState& s, int from) {
+    int n = static_cast<int>(s.players.size());
+    for (int k = 1; k <= n; ++k) {
+        int i = ((from + k) % n + n) % n;
+        if (!s.players[i].bankrupt) return i;
     }
+    return from;
 }
 
-MonopolyEngine::MonopolyEngine() {
-    cardMaster = DataMaster::createCardMaster();
-}
+std::string pname(const GameState& s, int p) { return validPlayer(s, p) ? s.players[p].name : "Bank"; }
 
-CardId MonopolyEngine::getCardIdAtPosition(int position) const {
-    for (const auto& [id, card] : cardMaster) {
-        if (card.boardPosition == position) {
-            return id;
-        }
-    }
-    return CardId::NONE;
-}
+}  // namespace
 
-int MonopolyEngine::getOwnerOfCard(CardId cardId) const {
-    for (const auto& player : state.players) {
-        if (std::find(player.ownedCards.begin(), player.ownedCards.end(), cardId) != player.ownedCards.end()) {
-            return player.id;
-        }
-    }
-    return -1;
-}
+// ============================================================================
+// 初期化・履歴
+// ============================================================================
 
-void MonopolyEngine::initGame(const std::vector<std::string>& playerNames, bool enableTax) {
-    state.players.clear();
-    state.enableTax = enableTax;
-    state.currentPhase = Phase::PURCHASE;
-    state.activePlayerIndex = 0;
-    state.turnNumber = 1;
+MonopolyEngine::MonopolyEngine() { newGame({"Player_1", "Player_2"}); }
 
+void MonopolyEngine::newGame(const std::vector<std::string>& playerNames, const Settings& settings) {
+    state = GameState();
+    state.settings = settings;
     for (int i = 0; i < static_cast<int>(playerNames.size()); ++i) {
         Player p;
         p.id = i;
         p.name = playerNames[i];
-        p.money = 1500;
-        p.position = 0;
-        p.isBankrupt = false;
+        p.money = settings.startMoney;
         state.players.push_back(p);
     }
-
-    for (auto& [id, card] : cardMaster) {
-        card.houseCount = 0;
-    }
-
-    purchasePassFlags.assign(playerNames.size(), false);
-    negotiationReadyFlags.assign(playerNames.size(), false);
-
-    historyStack.clear();
-    eventLogs.clear();
-    historyStack.push_back(state);
+    initialState = state;
+    snapshots.clear();
+    actions.clear();
+    eventsPerAction.clear();
+    redoStack.clear();
 }
 
-void MonopolyEngine::checkPurchasePhaseEnd() {
-    bool allPassed = true;
-    for (bool p : purchasePassFlags) {
-        if (!p) {
-            allPassed = false;
-            break;
-        }
-    }
-    if (allPassed) {
-        state.currentPhase = Phase::NEGOTIATION;
-        state.activePlayerIndex = 0;
-    }
+ApplyResult MonopolyEngine::validate(const Action& action) const {
+    GameState copy = state;
+    std::vector<GameEvent> ev;
+    std::string err = execute(action, copy, ev);
+    return {err.empty(), err};
 }
 
-bool MonopolyEngine::buyCardInPurchasePhase(int playerId, CardId cardId) {
-    if (state.currentPhase != Phase::PURCHASE) return false;
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return false;
-    if (playerId != state.activePlayerIndex) return false;
-    if (getOwnerOfCard(cardId) != -1) return false;
+ApplyResult MonopolyEngine::apply(const Action& action) { return applyInternal(action, true); }
 
-    Player& p = state.players[playerId];
-    const Card& card = cardMaster.at(cardId);
+ApplyResult MonopolyEngine::applyInternal(const Action& action, bool clearRedo) {
+    GameState next = state;
+    std::vector<GameEvent> ev;
+    std::string err = execute(action, next, ev);
+    if (!err.empty()) return {false, err};
 
-    if (p.money < card.price) return false;
-
-    for (CardId ownedId : p.ownedCards) {
-        if (cardMaster.at(ownedId).group == card.group) {
-            return false;
-        }
+    // イベントの共通項目を埋める
+    int baseId = 1;
+    for (const auto& list : eventsPerAction) baseId += static_cast<int>(list.size());
+    for (size_t i = 0; i < ev.size(); ++i) {
+        GameEvent& e = ev[i];
+        e.eventId = baseId + static_cast<int>(i);
+        e.actionIndex = static_cast<int>(actions.size());
+        if (e.turn == 0) e.turn = next.turn;
     }
 
-    historyStack.push_back(state);
-
-    p.money -= card.price;
-    p.ownedCards.push_back(cardId);
-
-    GameEvent event;
-    event.eventId = static_cast<int>(eventLogs.size()) + 1;
-    event.turn = state.turnNumber;
-    event.playerId = playerId;
-    event.type = ActionType::PURCHASE;
-    event.moneyChange = -card.price;
-    event.cardsGained.push_back(cardId);
-    event.playerMoneyAfter = p.money;
-    eventLogs.push_back(event);
-
-    state.activePlayerIndex = (state.activePlayerIndex + 1) % state.players.size();
-    checkPurchasePhaseEnd();
-
-    return true;
+    snapshots.push_back(state);
+    actions.push_back(action);
+    eventsPerAction.push_back(std::move(ev));
+    state = std::move(next);
+    if (clearRedo) redoStack.clear();
+    return {true, ""};
 }
 
-bool MonopolyEngine::passInPurchasePhase(int playerId) {
-    if (state.currentPhase != Phase::PURCHASE) return false;
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return false;
-    if (playerId != state.activePlayerIndex) return false;
-
-    historyStack.push_back(state);
-
-    purchasePassFlags[playerId] = true;
-
-    GameEvent event;
-    event.eventId = static_cast<int>(eventLogs.size()) + 1;
-    event.turn = state.turnNumber;
-    event.playerId = playerId;
-    event.type = ActionType::PASS;
-    eventLogs.push_back(event);
-
-    state.activePlayerIndex = (state.activePlayerIndex + 1) % state.players.size();
-    checkPurchasePhaseEnd();
-
-    return true;
-}
-
-bool MonopolyEngine::setNegotiationReady(int playerId, bool ready) {
-    if (state.currentPhase != Phase::NEGOTIATION) return false;
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return false;
-
-    negotiationReadyFlags[playerId] = ready;
-
-    bool allReady = true;
-    for (bool r : negotiationReadyFlags) {
-        if (!r) {
-            allReady = false;
-            break;
-        }
-    }
-    if (allReady) {
-        state.currentPhase = Phase::OPERATIONAL;
-        state.activePlayerIndex = 0;
-    } else {
-        state.activePlayerIndex = (state.activePlayerIndex + 1) % state.players.size();
-    }
-    return true;
-}
-
-void MonopolyEngine::forceAdvancePhase() {
-    historyStack.push_back(state);
-    if (state.currentPhase == Phase::PURCHASE) {
-        state.currentPhase = Phase::NEGOTIATION;
-    } else if (state.currentPhase == Phase::NEGOTIATION) {
-        state.currentPhase = Phase::OPERATIONAL;
-    }
-    state.activePlayerIndex = 0;
-}
-
-bool MonopolyEngine::isGroupCompleted(int playerId, GroupType group) const {
-    if (group == GroupType::RAILROAD_GROUP || group == GroupType::UTILITY_GROUP) {
-        return false;
-    }
-
-    int totalInGroup = 0;
-    int ownedByPlayer = 0;
-
-    for (const auto& [id, card] : cardMaster) {
-        if (card.group == group) {
-            totalInGroup++;
-            if (getOwnerOfCard(id) == playerId) {
-                ownedByPlayer++;
-            }
-        }
-    }
-    return (totalInGroup > 0 && totalInGroup == ownedByPlayer);
-}
-
-bool MonopolyEngine::buildHouse(int playerId, CardId cardId) {
-    if (state.currentPhase != Phase::OPERATIONAL) return false;
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return false;
-    if (getOwnerOfCard(cardId) != playerId) return false;
-
-    Card& targetCard = cardMaster.at(cardId);
-    if (!isGroupCompleted(playerId, targetCard.group)) return false;
-    if (targetCard.houseCount >= 5) return false;
-
-    Player& p = state.players[playerId];
-    if (p.money < targetCard.housePrice) return false;
-
-    for (const auto& [id, card] : cardMaster) {
-        if (card.group == targetCard.group) {
-            if (card.houseCount < targetCard.houseCount) {
-                return false;
-            }
-        }
-    }
-
-    historyStack.push_back(state);
-
-    p.money -= targetCard.housePrice;
-    targetCard.houseCount++;
-
-    GameEvent event;
-    event.eventId = static_cast<int>(eventLogs.size()) + 1;
-    event.turn = state.turnNumber;
-    event.playerId = playerId;
-    event.type = ActionType::BUILD_HOUSE;
-    event.moneyChange = -targetCard.housePrice;
-    event.cardsGained.push_back(cardId);
-    event.playerMoneyAfter = p.money;
-    eventLogs.push_back(event);
-
-    return true;
-}
-
-bool MonopolyEngine::sellHouse(int playerId, CardId cardId) {
-    if (state.currentPhase != Phase::OPERATIONAL) return false;
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return false;
-    if (getOwnerOfCard(cardId) != playerId) return false;
-
-    Card& targetCard = cardMaster.at(cardId);
-    if (targetCard.houseCount <= 0) return false;
-
-    for (const auto& [id, card] : cardMaster) {
-        if (card.group == targetCard.group) {
-            if (card.houseCount > targetCard.houseCount) {
-                return false;
-            }
-        }
-    }
-
-    historyStack.push_back(state);
-
-    int refundAmount = targetCard.housePrice / 2;
-    Player& p = state.players[playerId];
-    p.money += refundAmount;
-    targetCard.houseCount--;
-
-    GameEvent event;
-    event.eventId = static_cast<int>(eventLogs.size()) + 1;
-    event.turn = state.turnNumber;
-    event.playerId = playerId;
-    event.type = ActionType::SELL_HOUSE;
-    event.moneyChange = refundAmount;
-    event.cardsLost.push_back(cardId);
-    event.playerMoneyAfter = p.money;
-    eventLogs.push_back(event);
-
-    return true;
-}
-
-bool MonopolyEngine::validateTrade(const TradeOffer& offer) const {
-    if (state.currentPhase == Phase::PURCHASE) return false;
-
-    int pId = offer.proposerId;
-    int tId = offer.targetId;
-
-    if (pId < 0 || pId >= static_cast<int>(state.players.size())) return false;
-    if (tId < 0 || tId >= static_cast<int>(state.players.size())) return false;
-    if (pId == tId) return false;
-
-    const Player& proposer = state.players[pId];
-    const Player& target = state.players[tId];
-
-    if (proposer.isBankrupt || target.isBankrupt) return false;
-
-    if (proposer.money < offer.offerMoney) return false;
-    if (target.money < offer.requestMoney) return false;
-
-    for (CardId cId : offer.offerCards) {
-        if (getOwnerOfCard(cId) != pId) return false;
-    }
-
-    for (CardId cId : offer.requestCards) {
-        if (getOwnerOfCard(cId) != tId) return false;
-    }
-
-    return true;
-}
-
-bool MonopolyEngine::executeTrade(const TradeOffer& offer) {
-    if (!validateTrade(offer)) return false;
-
-    historyStack.push_back(state);
-
-    Player& proposer = state.players[offer.proposerId];
-    Player& target = state.players[offer.targetId];
-
-    proposer.money = proposer.money - offer.offerMoney + offer.requestMoney;
-    target.money = target.money - offer.requestMoney + offer.offerMoney;
-
-    for (CardId cId : offer.offerCards) {
-        auto it = std::find(proposer.ownedCards.begin(), proposer.ownedCards.end(), cId);
-        if (it != proposer.ownedCards.end()) {
-            proposer.ownedCards.erase(it);
-            target.ownedCards.push_back(cId);
-        }
-    }
-
-    for (CardId cId : offer.requestCards) {
-        auto it = std::find(target.ownedCards.begin(), target.ownedCards.end(), cId);
-        if (it != target.ownedCards.end()) {
-            target.ownedCards.erase(it);
-            proposer.ownedCards.push_back(cId);
-        }
-    }
-
-    GameEvent event;
-    event.eventId = static_cast<int>(eventLogs.size()) + 1;
-    event.turn = state.turnNumber;
-    event.playerId = offer.proposerId;
-    event.targetPlayerId = offer.targetId;
-    event.type = ActionType::TRADE_EXECUTE;
-    event.offerMoney = offer.offerMoney;
-    event.requestMoney = offer.requestMoney;
-    event.moneyChange = offer.requestMoney - offer.offerMoney;
-    event.cardsGained = offer.requestCards;
-    event.cardsLost = offer.offerCards;
-    event.playerMoneyAfter = proposer.money;
-    eventLogs.push_back(event);
-
-    return true;
-}
-
-bool MonopolyEngine::cancelTrade(const TradeOffer& offer) {
-    if (offer.proposerId < 0 || offer.proposerId >= static_cast<int>(state.players.size())) return false;
-    if (offer.targetId < 0 || offer.targetId >= static_cast<int>(state.players.size())) return false;
-
-    GameEvent event;
-    event.eventId = static_cast<int>(eventLogs.size()) + 1;
-    event.turn = state.turnNumber;
-    event.playerId = offer.proposerId;
-    event.targetPlayerId = offer.targetId;
-    event.type = ActionType::TRADE_CANCEL;
-    event.offerMoney = offer.offerMoney;
-    event.requestMoney = offer.requestMoney;
-    event.moneyChange = 0;
-    event.cardsGained = offer.requestCards;
-    event.cardsLost = offer.offerCards;
-    event.playerMoneyAfter = state.players[offer.proposerId].money;
-    eventLogs.push_back(event);
-
-    return true;
-}
-
-int MonopolyEngine::calculateTotalLiquidableAssets(int playerId) const {
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return 0;
-    const Player& p = state.players[playerId];
-    if (p.isBankrupt) return 0;
-
-    int total = p.money;
-
-    for (CardId cId : p.ownedCards) {
-        const Card& card = cardMaster.at(cId);
-        total += (card.houseCount * (card.housePrice / 2));
-    }
-
-    return total;
-}
-
-bool MonopolyEngine::declareBankrupt(int playerId, int creditorId) {
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return false;
-    Player& p = state.players[playerId];
-    if (p.isBankrupt) return false;
-
-    historyStack.push_back(state);
-
-    p.isBankrupt = true;
-
-    for (CardId cId : p.ownedCards) {
-        cardMaster.at(cId).houseCount = 0;
-    }
-
-    std::vector<CardId> lostCards = p.ownedCards;
-    if (creditorId >= 0 && creditorId < static_cast<int>(state.players.size()) && creditorId != playerId) {
-        Player& creditor = state.players[creditorId];
-        creditor.ownedCards.insert(creditor.ownedCards.end(), lostCards.begin(), lostCards.end());
-    }
-    p.ownedCards.clear();
-    p.money = 0;
-
-    GameEvent event;
-    event.eventId = static_cast<int>(eventLogs.size()) + 1;
-    event.turn = state.turnNumber;
-    event.playerId = playerId;
-    event.targetPlayerId = creditorId;
-    event.type = ActionType::BANKRUPT;
-    event.cardsLost = lostCards;
-    event.playerMoneyAfter = 0;
-    eventLogs.push_back(event);
-
-    return true;
-}
-
-bool MonopolyEngine::forceSetMoney(int playerId, int newAmount) {
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return false;
-
-    historyStack.push_back(state);
-
-    Player& p = state.players[playerId];
-    int oldMoney = p.money;
-    p.money = newAmount;
-
-    GameEvent event;
-    event.eventId = static_cast<int>(eventLogs.size()) + 1;
-    event.turn = state.turnNumber;
-    event.playerId = playerId;
-    event.type = ActionType::OVERRIDE;
-    event.moneyChange = newAmount - oldMoney;
-    event.playerMoneyAfter = p.money;
-    eventLogs.push_back(event);
-
-    return true;
-}
-
-bool MonopolyEngine::forceSetCardOwner(CardId cardId, int newOwnerId) {
-    if (newOwnerId < -1 || newOwnerId >= static_cast<int>(state.players.size())) return false;
-
-    historyStack.push_back(state);
-
-    int currentOwner = getOwnerOfCard(cardId);
-    if (currentOwner != -1) {
-        Player& oldP = state.players[currentOwner];
-        auto it = std::find(oldP.ownedCards.begin(), oldP.ownedCards.end(), cardId);
-        if (it != oldP.ownedCards.end()) {
-            oldP.ownedCards.erase(it);
-        }
-    }
-
-    if (newOwnerId != -1) {
-        state.players[newOwnerId].ownedCards.push_back(cardId);
-    }
-
-    GameEvent event;
-    event.eventId = static_cast<int>(eventLogs.size()) + 1;
-    event.turn = state.turnNumber;
-    event.playerId = newOwnerId;
-    event.targetPlayerId = currentOwner;
-    event.type = ActionType::OVERRIDE;
-    if (newOwnerId != -1) event.cardsGained.push_back(cardId);
-    if (currentOwner != -1) event.cardsLost.push_back(cardId);
-    eventLogs.push_back(event);
-
-    return true;
-}
-
-double MonopolyEngine::calculateExpectedIncomePerTurn(int playerId) const {
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return 0.0;
-    const Player& p = state.players[playerId];
-    if (p.isBankrupt) return 0.0;
-
-    int activeOpponents = 0;
-    for (const auto& other : state.players) {
-        if (other.id != playerId && !other.isBankrupt) {
-            activeOpponents++;
-        }
-    }
-    if (activeOpponents == 0) return 0.0;
-
-    const double baseLandProb = 1.0 / 40.0;
-    double expectedRentIncome = 0.0;
-
-    for (CardId cId : p.ownedCards) {
-        const Card& card = cardMaster.at(cId);
-        int rentIndex = card.houseCount;
-        int rentAmount = (rentIndex < static_cast<int>(card.rent.size())) ? card.rent[rentIndex] : card.rent.back();
-
-        expectedRentIncome += (rentAmount * baseLandProb * activeOpponents);
-    }
-
-    double expectedGoBonus = (7.0 / 40.0) * 200.0;
-
-    return expectedRentIncome + expectedGoBonus;
-}
-
-double MonopolyEngine::evaluateTradeFairness(const TradeOffer& offer) const {
-    if (!validateTrade(offer)) return 0.0;
-
-    double prevExpP = calculateExpectedIncomePerTurn(offer.proposerId);
-    double prevExpT = calculateExpectedIncomePerTurn(offer.targetId);
-
-    MonopolyEngine simEngine = *this;
-    simEngine.executeTrade(offer);
-
-    double nextExpP = simEngine.calculateExpectedIncomePerTurn(offer.proposerId);
-    double nextExpT = simEngine.calculateExpectedIncomePerTurn(offer.targetId);
-
-    double deltaExpP = nextExpP - prevExpP;
-    double deltaExpT = nextExpT - prevExpT;
-
-    double netMoneyGainP = offer.requestMoney - offer.offerMoney;
-
-    double fairnessScore = (deltaExpP * 10.0 + netMoneyGainP) - (deltaExpT * 10.0 - netMoneyGainP);
-
-    return fairnessScore;
-}
-
-bool MonopolyEngine::rollAndMove(int playerId, int dice1, int dice2) {
-    if (state.currentPhase != Phase::OPERATIONAL) return false;
-    if (playerId < 0 || playerId >= static_cast<int>(state.players.size())) return false;
-    if (playerId != state.activePlayerIndex) return false;
-    if (state.players[playerId].isBankrupt) return false;
-    
-    if (dice1 < 1 || dice1 > 6 || dice2 < 1 || dice2 > 6) {
-        return false;
-    }
-
-    historyStack.push_back(state);
-    Player& p = state.players[playerId];
-    int steps = dice1 + dice2;
-    int oldPos = p.position;
-    int newPos = (oldPos + steps) % 40;
-    p.position = newPos;
-
-    GameEvent rollEvent;
-    rollEvent.eventId = static_cast<int>(eventLogs.size()) + 1;
-    rollEvent.turn = state.turnNumber;
-    rollEvent.playerId = playerId;
-    rollEvent.type = ActionType::ROLL_AND_MOVE;
-    rollEvent.dice1 = dice1;
-    rollEvent.dice2 = dice2;
-    rollEvent.playerMoneyAfter = p.money;
-    eventLogs.push_back(rollEvent);
-
-    if (newPos < oldPos) {
-        p.money += 200;
-        
-        GameEvent goEvent;
-        goEvent.eventId = static_cast<int>(eventLogs.size()) + 1;
-        goEvent.turn = state.turnNumber;
-        goEvent.playerId = playerId;
-        goEvent.type = ActionType::GO_BONUS;
-        goEvent.moneyChange = 200;
-        goEvent.playerMoneyAfter = p.money;
-        eventLogs.push_back(goEvent);
-    }
-
-    if (state.enableTax && newPos == 4) {
-        p.money -= 200;
-    } else if (state.enableTax && newPos == 38) {
-        p.money -= 100;
-    } else {
-        CardId landedCardId = getCardIdAtPosition(newPos);
-        if (landedCardId != CardId::NONE) {
-            int ownerId = getOwnerOfCard(landedCardId);
-            if (ownerId != -1 && ownerId != playerId) {
-                const Card& card = cardMaster.at(landedCardId);
-                int rentIndex = card.houseCount;
-                int rentAmount = (rentIndex < static_cast<int>(card.rent.size())) ? card.rent[rentIndex] : card.rent.back();
-                
-                p.money -= rentAmount;
-                state.players[ownerId].money += rentAmount;
-
-                GameEvent rentEvent;
-                rentEvent.eventId = static_cast<int>(eventLogs.size()) + 1;
-                rentEvent.turn = state.turnNumber;
-                rentEvent.playerId = playerId;
-                rentEvent.targetPlayerId = ownerId;
-                rentEvent.type = ActionType::PAY_RENT;
-                rentEvent.moneyChange = -rentAmount;
-                rentEvent.playerMoneyAfter = p.money;
-                eventLogs.push_back(rentEvent);
-            }
-        }
-    }
-    return true;
-}
-
-void MonopolyEngine::passTurn() {
-    if (state.currentPhase != Phase::OPERATIONAL) return;
-    
-    do {
-        state.activePlayerIndex = (state.activePlayerIndex + 1) % state.players.size();
-        if (state.activePlayerIndex == 0) {
-            state.turnNumber++;
-        }
-    } while (state.players[state.activePlayerIndex].isBankrupt);
+ApplyResult MonopolyEngine::replaceLast(const Action& action) {
+    if (actions.empty()) return {false, "nothing to replace"};
+    if (!redoStack.empty()) return {false, "cannot replace while viewing the past"};
+    undo();
+    ApplyResult r = apply(action);
+    if (!r.ok) redo();  // 元に戻す
+    return r;
 }
 
 bool MonopolyEngine::undo() {
-    if (historyStack.size() <= 1) return false;
-    historyStack.pop_back();
-    state = historyStack.back();
-    if (!eventLogs.empty()) {
-        eventLogs.pop_back();
-    }
+    if (snapshots.empty()) return false;
+    state = snapshots.back();
+    snapshots.pop_back();
+    redoStack.push_back(actions.back());
+    actions.pop_back();
+    eventsPerAction.pop_back();
     return true;
 }
 
-bool MonopolyEngine::exportLog(const std::string& filename) const {
-    std::ofstream ofs(filename, std::ios::binary);
-    if (!ofs.is_open()) return false;
-
-    ofs << "# MONOPOLY FULL EVENT LOG\n";
-    ofs << "[PLAYERS]\n";
-    ofs << "playerCount=" << state.players.size() << "\n";
-    for (const auto& p : state.players) {
-        ofs << "p:" << p.id << "," << p.name << "\n";
-    }
-
-    ofs << "\n[EVENTS]\n";
-    for (const auto& evt : eventLogs) {
-        ofs << evt.eventId << "," << evt.turn << "," << evt.playerId << "," 
-            << static_cast<int>(evt.type) << "," << evt.targetPlayerId << ","
-            << evt.dice1 << "," << evt.dice2 << ","
-            << evt.moneyChange << "," << evt.offerMoney << "," << evt.requestMoney << ",";
-        
-        if (evt.cardsGained.empty()) {
-            ofs << "none";
-        } else {
-            for (size_t i = 0; i < evt.cardsGained.size(); ++i) {
-                ofs << cardIdToString(evt.cardsGained[i]) << (i + 1 < evt.cardsGained.size() ? ";" : "");
-            }
-        }
-        ofs << ",";
-        if (evt.cardsLost.empty()) {
-            ofs << "none";
-        } else {
-            for (size_t i = 0; i < evt.cardsLost.size(); ++i) {
-                ofs << cardIdToString(evt.cardsLost[i]) << (i + 1 < evt.cardsLost.size() ? ";" : "");
-            }
-        }
-        ofs << "\n";
-    }
-
-    ofs.close();
+bool MonopolyEngine::redo() {
+    if (redoStack.empty()) return false;
+    Action a = redoStack.back();
+    ApplyResult r = applyInternal(a, false);
+    if (!r.ok) return false;  // 通常は起こらない（記録時に成功した操作の再適用）
+    redoStack.pop_back();
     return true;
 }
 
-bool MonopolyEngine::importAndReplayLog(const std::string& filename) {
-    std::ifstream ifs(filename, std::ios::binary);
-    if (!ifs.is_open()) return false;
+std::vector<GameEvent> MonopolyEngine::getEvents() const {
+    std::vector<GameEvent> all;
+    for (const auto& list : eventsPerAction) all.insert(all.end(), list.begin(), list.end());
+    return all;
+}
 
-    std::stringstream buffer;
-    buffer << ifs.rdbuf();
-    ifs.close();
+const GameState& MonopolyEngine::getStateBeforeAction(size_t actionIndex) const {
+    if (actionIndex < snapshots.size()) return snapshots[actionIndex];
+    return state;
+}
 
-    std::string content = buffer.str();
-    if (content.empty()) return false;
+CardId MonopolyEngine::getCardIdAtPosition(int position) const {
+    if (position < 0 || position >= BOARD_SIZE) return CardId::NONE;
+    return DataMaster::board()[position].card;
+}
 
-    std::stringstream ssContent(content);
-    std::string line;
-    std::string currentSection = "";
+// ============================================================================
+// ルール計算
+// ============================================================================
 
-    std::vector<std::string> loadedPlayerNames;
-
-    auto safeStoi = [](const std::string& str, int defaultVal = 0) -> int {
-        if (str.empty() || str == "none") return defaultVal;
-        try {
-            size_t idx = 0;
-            return std::stoi(str, &idx);
-        } catch (...) {
-            return defaultVal;
-        }
-    };
-
-    auto parseCardIdList = [](const std::string& str) -> std::vector<CardId> {
-        std::vector<CardId> result;
-        if (str.empty() || str == "none") return result;
-        std::stringstream ss(str);
-        std::string token;
-        while (std::getline(ss, token, ';')) {
-            if (!token.empty()) {
-                CardId id = stringToCardId(token);
-                if (id != CardId::NONE) {
-                    result.push_back(id);
-                }
-            }
-        }
-        return result;
-    };
-
-    std::vector<std::string> lines;
-    while (std::getline(ssContent, line)) {
-        while (!line.empty() && (line.back() == '\r' || line.back() == '\n' || std::isspace(static_cast<unsigned char>(line.back())))) {
-            line.pop_back();
-        }
-        if (!line.empty() && line[0] != '#') {
-            lines.push_back(line);
-        }
-    }
-
-    for (const auto& l : lines) {
-        if (l == "[PLAYERS]") currentSection = "[PLAYERS]";
-        else if (l == "[EVENTS]") currentSection = "[EVENTS]";
-        else if (currentSection == "[PLAYERS]" && l.rfind("p:", 0) == 0) {
-            std::stringstream pSs(l.substr(2));
-            std::string idStr, name;
-            std::getline(pSs, idStr, ',');
-            std::getline(pSs, name, ',');
-            if (!name.empty()) loadedPlayerNames.push_back(name);
-        }
-    }
-
-    if (loadedPlayerNames.empty()) {
-        loadedPlayerNames = {"Player_1", "Player_2"};
-    }
-
-    initGame(loadedPlayerNames, true);
-
-    currentSection = "";
-    for (const auto& l : lines) {
-        if (l == "[EVENTS]") {
-            currentSection = "[EVENTS]";
-            continue;
-        }
-        if (currentSection == "[EVENTS]") {
-            std::stringstream eSs(l);
-            std::vector<std::string> tokens;
-            std::string token;
-            while (std::getline(eSs, token, ',')) {
-                tokens.push_back(token);
-            }
-
-            if (tokens.size() < 12) continue;
-
-            int pId = safeStoi(tokens[2], -1);
-            ActionType type = static_cast<ActionType>(safeStoi(tokens[3], 0));
-
-            if (pId < 0 || pId >= static_cast<int>(state.players.size())) continue;
-
-            std::vector<CardId> gainedCards = parseCardIdList(tokens[10]);
-            std::vector<CardId> lostCards = parseCardIdList(tokens[11]);
-
-            if (type == ActionType::PURCHASE && !gainedCards.empty()) {
-                buyCardInPurchasePhase(pId, gainedCards[0]);
-            } else if (type == ActionType::PASS) {
-                if (state.currentPhase == Phase::PURCHASE) {
-                    passInPurchasePhase(pId);
-                } else if (state.currentPhase == Phase::NEGOTIATION) {
-                    setNegotiationReady(pId, true);
-                } else if (state.currentPhase == Phase::OPERATIONAL) {
-                    passTurn();
-                }
-            } else if (type == ActionType::BUILD_HOUSE && !gainedCards.empty()) {
-                buildHouse(pId, gainedCards[0]);
-            } else if (type == ActionType::SELL_HOUSE && !lostCards.empty()) {
-                sellHouse(pId, lostCards[0]);
-            } else if (type == ActionType::TRADE_EXECUTE) {
-                int targetId = safeStoi(tokens[4], -1);
-                if (targetId >= 0 && targetId < static_cast<int>(state.players.size())) {
-                    TradeOffer offer;
-                    offer.proposerId = pId;
-                    offer.targetId = targetId;
-                    offer.offerMoney = safeStoi(tokens[8], 0);
-                    offer.requestMoney = safeStoi(tokens[9], 0);
-                    offer.requestCards = gainedCards;
-                    offer.offerCards = lostCards;
-
-                    if (validateTrade(offer)) {
-                        executeTrade(offer);
-                    }
-                }
-            } else if (type == ActionType::ROLL_AND_MOVE) {
-                int d1 = safeStoi(tokens[5], 1);
-                int d2 = safeStoi(tokens[6], 1);
-                rollAndMove(pId, d1, d2);
-            }
-        }
-    }
-
+bool MonopolyEngine::groupCompleted(const GameState& s, int playerId, GroupType group) {
+    if (group == GroupType::RAILROAD || group == GroupType::UTILITY) return false;
+    for (CardId c : DataMaster::groupCards(group))
+        if (s.card(c).owner != playerId) return false;
     return true;
+}
+
+int MonopolyEngine::rentOf(const GameState& s, CardId cardId, int diceSum) {
+    const Card& card = DataMaster::card(cardId);
+    const CardState& cs = s.card(cardId);
+    if (cs.owner < 0 || cs.mortgaged) return 0;
+
+    switch (card.kind) {
+        case CardKind::PROPERTY: {
+            if (cs.houses > 0) return card.rent[std::min(cs.houses, 5)];
+            int base = card.rent[0];
+            if (s.settings.doubleRentOnSet && groupCompleted(s, cs.owner, card.group)) base *= 2;
+            return base;
+        }
+        case CardKind::RAILROAD: {
+            int n = 0;
+            for (CardId c : DataMaster::groupCards(GroupType::RAILROAD))
+                if (s.card(c).owner == cs.owner) ++n;
+            return card.rent[std::max(1, std::min(n, 4)) - 1];
+        }
+        case CardKind::UTILITY: {
+            int n = 0;
+            for (CardId c : DataMaster::groupCards(GroupType::UTILITY))
+                if (s.card(c).owner == cs.owner) ++n;
+            return diceSum * (n >= 2 ? card.rent[1] : card.rent[0]);
+        }
+    }
+    return 0;
+}
+
+int MonopolyEngine::liquidValue(const GameState& s, int playerId) {
+    if (!validPlayer(s, playerId) || s.players[playerId].bankrupt) return 0;
+    int total = s.players[playerId].money;
+    for (int i = 0; i < CARD_COUNT; ++i) {
+        const CardState& cs = s.cards[i];
+        if (cs.owner != playerId) continue;
+        const Card& c = DataMaster::cards()[i];
+        total += cs.houses * (c.housePrice / 2);
+        if (!cs.mortgaged) total += c.mortgage;
+    }
+    return total;
+}
+
+int MonopolyEngine::unmortgageCost(const GameState& s, CardId cardId) {
+    int m = DataMaster::card(cardId).mortgage;
+    int pct = s.settings.unmortgageInterestPct;
+    return (m * (100 + pct) + 99) / 100;  // 切り上げ
+}
+
+// ============================================================================
+// アクション実行（ここがルールの本体）
+// ============================================================================
+
+std::string MonopolyEngine::execute(const Action& a, GameState& s, std::vector<GameEvent>& ev) {
+    auto emit = [&](ActionType t, int player) -> GameEvent& {
+        GameEvent e;
+        e.type = t;
+        e.playerId = player;
+        e.turn = s.turn;
+        // その時点の所持金（お金を動かしてから emit するので「このイベント直後」の値になる）
+        if (validPlayer(s, player)) {
+            e.playerMoneyAfter = s.players[player].money;
+            e.totalAssetAfter = liquidValue(s, player);
+        }
+        ev.push_back(e);
+        return ev.back();
+    };
+    auto groupHasHouses = [&](GroupType g) {
+        if (g == GroupType::RAILROAD || g == GroupType::UTILITY) return false;
+        for (CardId c : DataMaster::groupCards(g))
+            if (s.card(c).houses > 0) return true;
+        return false;
+    };
+    auto checkGameOver = [&]() {
+        if (s.phase != Phase::FINISHED && s.aliveCount() <= 1) {
+            s.phase = Phase::FINISHED;
+            s.pendingPurchase = CardId::NONE;
+            s.pendingUtility = CardId::NONE;
+            GameEvent& e = emit(ActionType::GAME_OVER, nextAlive(s, -1));
+            (void)e;
+        }
+    };
+    auto startOperational = [&]() {
+        s.phase = Phase::OPERATIONAL;
+        s.activePlayer = nextAlive(s, -1);
+        s.turn = 1;
+        s.hasRolled = false;
+        s.doublesStreak = 0;
+        s.pendingPurchase = CardId::NONE;
+        emit(ActionType::PHASE_CHANGE, -1).turn = 1;
+    };
+
+    const int p = a.player;
+
+    switch (a.kind) {
+    // ------------------------------------------------------------------ BUY
+    case ActionKind::BUY: {
+        if (!alivePlayer(s, p)) return "invalid player";
+        if (s.phase == Phase::PURCHASE) {
+            if (p != s.activePlayer) return "not " + pname(s, p) + "'s turn (active: " + pname(s, s.activePlayer) + ")";
+            if (!validCard(a.card)) return "invalid card";
+            const Card& c = DataMaster::card(a.card);
+            if (s.card(a.card).owner != -1) return c.code + " is already owned by " + pname(s, s.card(a.card).owner);
+            for (CardId owned : s.ownedBy(p))
+                if (DataMaster::card(owned).group == c.group)
+                    return "already owns a card in group " + DataMaster::groupName(c.group) + " (" + DataMaster::toString(owned) + ")";
+            if (s.players[p].money < c.price) return "not enough money (" + std::to_string(c.price) + " needed)";
+            s.players[p].money -= c.price;
+            s.card(a.card).owner = p;
+            s.consecutivePasses = 0;
+            GameEvent& e = emit(ActionType::PURCHASE, p);
+            e.moneyChange = -c.price;
+            e.cardsGained.push_back(a.card);
+            s.activePlayer = nextAlive(s, s.activePlayer);
+            return "";
+        }
+        if (s.phase == Phase::OPERATIONAL) {
+            if (p != s.activePlayer) return "not " + pname(s, p) + "'s turn";
+            if (s.pendingPurchase == CardId::NONE) return "no unowned card to buy (must land on it)";
+            if (a.card != CardId::NONE && a.card != s.pendingPurchase)
+                return "can only buy the landed card " + DataMaster::toString(s.pendingPurchase);
+            CardId cid = s.pendingPurchase;
+            const Card& c = DataMaster::card(cid);
+            if (s.players[p].money < c.price) return "not enough money (" + std::to_string(c.price) + " needed)";
+            s.players[p].money -= c.price;
+            s.card(cid).owner = p;
+            s.pendingPurchase = CardId::NONE;
+            GameEvent& e = emit(ActionType::PURCHASE, p);
+            e.moneyChange = -c.price;
+            e.cardsGained.push_back(cid);
+            return "";
+        }
+        return "cannot buy in this phase";
+    }
+    // ----------------------------------------------------------------- PASS
+    case ActionKind::PASS: {
+        if (s.phase != Phase::PURCHASE) return "PASS is only for the purchase phase (use END to end a turn)";
+        if (p != s.activePlayer) return "not " + pname(s, p) + "'s turn (active: " + pname(s, s.activePlayer) + ")";
+        s.consecutivePasses++;
+        emit(ActionType::PASS, p);
+        if (s.consecutivePasses >= s.aliveCount()) {
+            s.phase = Phase::NEGOTIATION;
+            s.activePlayer = nextAlive(s, -1);
+            for (auto& pl : s.players) pl.ready = false;
+            emit(ActionType::PHASE_CHANGE, -1);
+        } else {
+            s.activePlayer = nextAlive(s, s.activePlayer);
+        }
+        return "";
+    }
+    // ---------------------------------------------------------------- READY
+    case ActionKind::READY: {
+        if (s.phase != Phase::NEGOTIATION) return "READY is only for the negotiation phase";
+        if (!alivePlayer(s, p)) return "invalid player";
+        if (s.players[p].ready) return pname(s, p) + " is already ready";
+        s.players[p].ready = true;
+        emit(ActionType::READY, p);
+        bool all = true;
+        for (const auto& pl : s.players)
+            if (!pl.bankrupt && !pl.ready) all = false;
+        if (all) startOperational();
+        return "";
+    }
+    case ActionKind::ALL_READY: {
+        if (s.phase != Phase::NEGOTIATION) return "only in the negotiation phase";
+        for (auto& pl : s.players)
+            if (!pl.bankrupt) pl.ready = true;
+        emit(ActionType::READY, -1);
+        startOperational();
+        return "";
+    }
+    case ActionKind::CONTINUE: {
+        if (s.phase != Phase::FINISHED || s.resumePhase == Phase::FINISHED) return "nothing to continue";
+        if (s.aliveCount() < 2) return "only one player left";
+        s.phase = s.resumePhase;
+        s.resumePhase = Phase::FINISHED;
+        emit(ActionType::PHASE_CHANGE, -1);
+        return "";
+    }
+    // ----------------------------------------------------------------- ROLL
+    case ActionKind::ROLL: {
+        if (s.phase != Phase::OPERATIONAL) return "can only roll in the operational phase";
+        if (p != s.activePlayer) return "not " + pname(s, p) + "'s turn (active: " + pname(s, s.activePlayer) + ")";
+        if (s.hasRolled) return "already rolled this turn (use END)";
+        if (s.pendingPurchase != CardId::NONE)
+            return "decide on " + DataMaster::toString(s.pendingPurchase) + " first (buy / decline / auction)";
+        if (s.pendingUtility != CardId::NONE) return "roll for the utility rent first";
+        if (a.d1 < 1 || a.d1 > 6 || a.d2 < 1 || a.d2 > 6) return "dice must be 1-6";
+
+        Player& pl = s.players[p];
+        int sum = a.d1 + a.d2;
+        int oldPos = pl.position;
+        int newPos = (oldPos + sum) % BOARD_SIZE;
+        pl.position = newPos;
+        s.hasRolled = true;
+        s.lastDice1 = a.d1;
+        s.lastDice2 = a.d2;
+        s.debtCreditor = -1;
+        // ぞろ目: もう一度振れる（hasRolled を戻す）。連続 maxDoubles 回目のぞろ目は振り直しなし
+        if (s.settings.doublesRollAgain && a.d1 == a.d2) {
+            s.doublesStreak++;
+            if (s.settings.maxDoubles <= 0 || s.doublesStreak < s.settings.maxDoubles) s.hasRolled = false;
+        } else {
+            s.doublesStreak = 0;
+        }
+
+        GameEvent& mv = emit(ActionType::ROLL_AND_MOVE, p);
+        mv.dice1 = a.d1;
+        mv.dice2 = a.d2;
+        mv.position = newPos;
+
+        if (newPos < oldPos && s.settings.goBonus > 0) {  // GO 通過 or 停止
+            pl.money += s.settings.goBonus;
+            emit(ActionType::GO_BONUS, p).moneyChange = s.settings.goBonus;
+        }
+
+        const auto& sq = DataMaster::board()[newPos];
+        if (sq.type == SquareType::TAX && s.settings.taxEnabled) {
+            pl.money -= sq.tax;
+            GameEvent& e = emit(ActionType::PAY_TAX, p);
+            e.moneyChange = -sq.tax;
+            e.position = newPos;
+        } else if (sq.type == SquareType::CARD) {
+            CardState& cs = s.card(sq.card);
+            if (cs.owner == -1) {
+                s.pendingPurchase = sq.card;
+                GameEvent& e = emit(ActionType::LAND_UNOWNED, p);
+                e.cardsGained.push_back(sq.card);
+                e.position = newPos;
+            } else if (cs.owner != p && s.settings.utilityRentRoll && DataMaster::card(sq.card).kind == CardKind::UTILITY &&
+                       !cs.mortgaged) {
+                s.pendingUtility = sq.card;  // 支払い額はもう一度振った出目で決まる
+            } else if (cs.owner != p) {
+                int rent = rentOf(s, sq.card, sum);
+                if (rent > 0) {
+                    pl.money -= rent;
+                    s.players[cs.owner].money += rent;
+                    s.debtCreditor = cs.owner;
+                    GameEvent& e = emit(ActionType::PAY_RENT, p);
+                    e.targetPlayerId = cs.owner;
+                    e.moneyChange = -rent;
+                    e.cardsLost.push_back(sq.card);  // 対象カード（表示用）
+                    e.position = newPos;
+                }
+            }
+        }
+        return "";
+    }
+    // --------------------------------------------------------- UTILITY_ROLL
+    case ActionKind::UTILITY_ROLL: {
+        if (s.phase != Phase::OPERATIONAL) return "not in operational phase";
+        if (p != s.activePlayer) return "not " + pname(s, p) + "'s turn";
+        if (s.pendingUtility == CardId::NONE) return "no utility rent to roll for";
+        if (a.d1 < 1 || a.d1 > 6 || a.d2 < 1 || a.d2 > 6) return "dice must be 1-6";
+        const CardId cid = s.pendingUtility;
+        s.pendingUtility = CardId::NONE;
+        const CardState& cs = s.card(cid);
+        const int rent = (cs.owner >= 0 && cs.owner != p) ? rentOf(s, cid, a.d1 + a.d2) : 0;
+        if (rent > 0) {
+            s.players[p].money -= rent;
+            s.players[cs.owner].money += rent;
+            s.debtCreditor = cs.owner;
+            GameEvent& e = emit(ActionType::PAY_RENT, p);
+            e.targetPlayerId = cs.owner;
+            e.moneyChange = -rent;
+            e.cardsLost.push_back(cid);
+            e.dice1 = a.d1;
+            e.dice2 = a.d2;
+            e.position = s.players[p].position;
+        }
+        return "";
+    }
+    // -------------------------------------------------------------- DECLINE
+    case ActionKind::DECLINE: {
+        if (s.phase != Phase::OPERATIONAL) return "not in operational phase";
+        if (p != s.activePlayer) return "not " + pname(s, p) + "'s turn";
+        if (s.pendingPurchase == CardId::NONE) return "nothing to decline";
+        GameEvent& e = emit(ActionType::DECLINE, p);
+        e.cardsLost.push_back(s.pendingPurchase);
+        s.pendingPurchase = CardId::NONE;
+        return "";
+    }
+    // -------------------------------------------------------------- AUCTION
+    case ActionKind::AUCTION: {
+        if (s.phase != Phase::OPERATIONAL) return "not in operational phase";
+        if (p != s.activePlayer) return "not " + pname(s, p) + "'s turn";
+        if (s.pendingPurchase == CardId::NONE) return "no card to auction";
+        if (a.card != CardId::NONE && a.card != s.pendingPurchase)
+            return "auction card must be " + DataMaster::toString(s.pendingPurchase);
+        CardId cid = s.pendingPurchase;
+        if (a.target == -1) {  // 落札者なし
+            GameEvent& e = emit(ActionType::AUCTION, -1);
+            e.cardsLost.push_back(cid);
+            s.pendingPurchase = CardId::NONE;
+            return "";
+        }
+        if (!alivePlayer(s, a.target)) return "invalid winner";
+        if (a.amount < 0) return "price must be >= 0";
+        if (s.players[a.target].money < a.amount) return pname(s, a.target) + " does not have " + std::to_string(a.amount);
+        s.players[a.target].money -= a.amount;
+        s.card(cid).owner = a.target;
+        s.pendingPurchase = CardId::NONE;
+        GameEvent& e = emit(ActionType::AUCTION, a.target);
+        e.moneyChange = -a.amount;
+        e.cardsGained.push_back(cid);
+        return "";
+    }
+    // ------------------------------------------------------------- END_TURN
+    case ActionKind::END_TURN: {
+        if (s.phase != Phase::OPERATIONAL) return "not in operational phase";
+        if (p != s.activePlayer) return "not " + pname(s, p) + "'s turn";
+        if (!s.hasRolled) return s.doublesStreak > 0 ? "doubles: roll again" : "roll first";
+        if (s.pendingPurchase != CardId::NONE)
+            return "decide on " + DataMaster::toString(s.pendingPurchase) + " first (buy / decline / auction)";
+        if (s.pendingUtility != CardId::NONE) return "roll for the utility rent first";
+        if (s.settings.debtBlocksEndTurn && s.players[p].money < 0)
+            return "money is negative: sell houses / mortgage / trade to pay, or declare bankruptcy";
+        emit(ActionType::END_TURN, p);
+        int nxt = nextAlive(s, s.activePlayer);
+        if (nxt <= s.activePlayer) s.turn++;
+        s.activePlayer = nxt;
+        s.hasRolled = false;
+        s.doublesStreak = 0;
+        s.debtCreditor = -1;
+        return "";
+    }
+    // ---------------------------------------------------------------- BUILD
+    case ActionKind::BUILD: {
+        if (s.phase != Phase::OPERATIONAL) return "can only build in the operational phase";
+        if (!alivePlayer(s, p)) return "invalid player";
+        if (!validCard(a.card)) return "invalid card";
+        const Card& c = DataMaster::card(a.card);
+        CardState& cs = s.card(a.card);
+        if (c.kind != CardKind::PROPERTY) return "cannot build on " + c.code;
+        if (cs.owner != p) return pname(s, p) + " does not own " + c.code;
+        if (!groupCompleted(s, p, c.group)) return "group " + DataMaster::groupName(c.group) + " is not complete";
+        int minH = 99;
+        for (CardId g : DataMaster::groupCards(c.group)) {
+            if (s.card(g).mortgaged) return DataMaster::toString(g) + " is mortgaged";
+            minH = std::min(minH, s.card(g).houses);
+        }
+        if (cs.houses >= 5) return c.code + " already has a hotel";
+        if (cs.houses > minH) return "must build evenly (other cards in group have fewer houses)";
+        if (s.players[p].money < c.housePrice) return "not enough money (" + std::to_string(c.housePrice) + " needed)";
+        s.players[p].money -= c.housePrice;
+        cs.houses++;
+        GameEvent& e = emit(ActionType::BUILD_HOUSE, p);
+        e.moneyChange = -c.housePrice;
+        e.cardsGained.push_back(a.card);
+        return "";
+    }
+    // ----------------------------------------------------------------- SELL
+    case ActionKind::SELL: {
+        if (s.phase != Phase::OPERATIONAL) return "can only sell houses in the operational phase";
+        if (!alivePlayer(s, p)) return "invalid player";
+        if (!validCard(a.card)) return "invalid card";
+        const Card& c = DataMaster::card(a.card);
+        CardState& cs = s.card(a.card);
+        if (cs.owner != p) return pname(s, p) + " does not own " + c.code;
+        if (cs.houses <= 0) return c.code + " has no houses";
+        for (CardId g : DataMaster::groupCards(c.group))
+            if (s.card(g).houses > cs.houses) return "must sell evenly (sell from cards with more houses first)";
+        int refund = c.housePrice / 2;
+        s.players[p].money += refund;
+        cs.houses--;
+        GameEvent& e = emit(ActionType::SELL_HOUSE, p);
+        e.moneyChange = refund;
+        e.cardsLost.push_back(a.card);
+        return "";
+    }
+    // ------------------------------------------------------------- MORTGAGE
+    case ActionKind::MORTGAGE: {
+        if (s.phase != Phase::OPERATIONAL && s.phase != Phase::NEGOTIATION) return "cannot mortgage in this phase";
+        if (!alivePlayer(s, p)) return "invalid player";
+        if (!validCard(a.card)) return "invalid card";
+        const Card& c = DataMaster::card(a.card);
+        CardState& cs = s.card(a.card);
+        if (cs.owner != p) return pname(s, p) + " does not own " + c.code;
+        if (cs.mortgaged) return c.code + " is already mortgaged";
+        if (groupHasHouses(c.group)) return "sell all houses in group " + DataMaster::groupName(c.group) + " first";
+        cs.mortgaged = true;
+        s.players[p].money += c.mortgage;
+        GameEvent& e = emit(ActionType::MORTGAGE, p);
+        e.moneyChange = c.mortgage;
+        e.cardsLost.push_back(a.card);
+        return "";
+    }
+    case ActionKind::UNMORTGAGE: {
+        if (s.phase != Phase::OPERATIONAL && s.phase != Phase::NEGOTIATION) return "cannot unmortgage in this phase";
+        if (!alivePlayer(s, p)) return "invalid player";
+        if (!validCard(a.card)) return "invalid card";
+        const Card& c = DataMaster::card(a.card);
+        CardState& cs = s.card(a.card);
+        if (cs.owner != p) return pname(s, p) + " does not own " + c.code;
+        if (!cs.mortgaged) return c.code + " is not mortgaged";
+        int cost = unmortgageCost(s, a.card);
+        if (s.players[p].money < cost) return "not enough money (" + std::to_string(cost) + " needed)";
+        cs.mortgaged = false;
+        s.players[p].money -= cost;
+        GameEvent& e = emit(ActionType::UNMORTGAGE, p);
+        e.moneyChange = -cost;
+        e.cardsGained.push_back(a.card);
+        return "";
+    }
+    // ---------------------------------------------------------------- TRADE
+    case ActionKind::TRADE:
+    case ActionKind::TRADE_CANCEL: {
+        const TradeOffer& t = a.trade;
+        if (s.phase != Phase::NEGOTIATION && s.phase != Phase::OPERATIONAL) return "cannot trade in this phase";
+        if (t.proposerId != p || t.targetId != a.target) return "internal: trade players mismatch";
+        if (!alivePlayer(s, p) || !alivePlayer(s, a.target)) return "invalid player";
+        if (p == a.target) return "cannot trade with yourself";
+        if (t.offerMoney < 0 || t.requestMoney < 0) return "money must be >= 0";
+        if (t.offerCards.empty() && t.requestCards.empty() && t.offerMoney == 0 && t.requestMoney == 0)
+            return "nothing to trade (select cards or money)";
+
+        if (a.kind == ActionKind::TRADE_CANCEL) {  // 破談: 記録だけ（状態は変えない）
+            GameEvent& e = emit(ActionType::TRADE_CANCEL, p);
+            e.targetPlayerId = a.target;
+            e.cardsGained = t.requestCards;
+            e.cardsLost = t.offerCards;
+            return "";
+        }
+
+        std::set<int> seen;
+        for (CardId c : t.offerCards) {
+            if (!validCard(c)) return "invalid card";
+            if (!seen.insert(cardIndex(c)).second) return "duplicate card " + DataMaster::toString(c);
+            if (s.card(c).owner != p) return pname(s, p) + " does not own " + DataMaster::toString(c);
+        }
+        for (CardId c : t.requestCards) {
+            if (!validCard(c)) return "invalid card";
+            if (!seen.insert(cardIndex(c)).second) return "duplicate card " + DataMaster::toString(c);
+            if (s.card(c).owner != a.target) return pname(s, a.target) + " does not own " + DataMaster::toString(c);
+        }
+        for (int ci : seen)
+            if (groupHasHouses(DataMaster::cards()[ci].group))
+                return "sell houses in group " + DataMaster::groupName(DataMaster::cards()[ci].group) + " before trading";
+        if (s.players[p].money < t.offerMoney) return pname(s, p) + " does not have " + std::to_string(t.offerMoney);
+        if (s.players[a.target].money < t.requestMoney) return pname(s, a.target) + " does not have " + std::to_string(t.requestMoney);
+
+        s.players[p].money += t.requestMoney - t.offerMoney;
+        s.players[a.target].money += t.offerMoney - t.requestMoney;
+        for (CardId c : t.offerCards) s.card(c).owner = a.target;      // 抵当状態はそのまま移る
+        for (CardId c : t.requestCards) s.card(c).owner = p;
+
+        GameEvent& e = emit(ActionType::TRADE_EXECUTE, p);
+        e.targetPlayerId = a.target;
+        e.moneyChange = t.requestMoney - t.offerMoney;
+        e.cardsGained = t.requestCards;
+        e.cardsLost = t.offerCards;
+        return "";
+    }
+    // ------------------------------------------------------------- BANKRUPT
+    case ActionKind::BANKRUPT: {
+        if (s.phase == Phase::FINISHED) return "game is over";
+        if (!alivePlayer(s, p)) return "invalid player";
+        int cred = a.target;
+        if (cred != -1 && (!alivePlayer(s, cred) || cred == p)) return "invalid creditor";
+
+        Player& pl = s.players[p];
+        // 家は銀行に半額で売却 → 現金化
+        int cash = pl.money;
+        std::vector<CardId> owned = s.ownedBy(p);
+        for (CardId c : owned) {
+            cash += s.card(c).houses * (DataMaster::card(c).housePrice / 2);
+            s.card(c).houses = 0;
+        }
+        if (cred >= 0) {
+            // 債権者は支払い時に満額を受け取っているので、払えなかった分（cash < 0）は返してもらう
+            if (cash > 0 || s.settings.debtBlocksEndTurn) s.players[cred].money += cash;
+            for (CardId c : owned) s.card(c).owner = cred;  // 抵当状態のまま移る
+        } else {
+            for (CardId c : owned) {
+                s.card(c).owner = -1;
+                s.card(c).mortgaged = false;
+            }
+        }
+        pl.money = 0;
+        pl.bankrupt = true;
+        pl.ready = false;
+
+        GameEvent& e = emit(ActionType::BANKRUPT, p);
+        e.targetPlayerId = cred;
+        e.cardsLost = owned;
+        e.moneyChange = -std::max(0, cash);
+
+        if (s.aliveCount() <= 1) {
+            checkGameOver();
+            return "";
+        }
+        if (s.phase == Phase::PURCHASE) {
+            if (s.activePlayer == p) s.activePlayer = nextAlive(s, p);
+            if (s.consecutivePasses >= s.aliveCount()) {
+                s.phase = Phase::NEGOTIATION;
+                s.activePlayer = nextAlive(s, -1);
+                for (auto& x : s.players) x.ready = false;
+                emit(ActionType::PHASE_CHANGE, -1);
+            }
+        } else if (s.phase == Phase::NEGOTIATION) {
+            bool all = true;
+            for (const auto& x : s.players)
+                if (!x.bankrupt && !x.ready) all = false;
+            if (all) startOperational();
+        } else if (s.phase == Phase::OPERATIONAL && s.activePlayer == p) {
+            int nxt = nextAlive(s, p);
+            if (nxt <= p) s.turn++;
+            s.activePlayer = nxt;
+            s.hasRolled = false;
+            s.doublesStreak = 0;
+            s.pendingPurchase = CardId::NONE;
+            s.pendingUtility = CardId::NONE;
+            s.debtCreditor = -1;
+        }
+        if (s.settings.endOnBankrupt && s.phase != Phase::FINISHED) {
+            // 脱落者が出たらゲーム終了（CONTINUE で続けられる）。勝者は換金可能額がいちばん多い人
+            s.resumePhase = s.phase;
+            s.phase = Phase::FINISHED;
+            int best = -1;
+            for (const auto& x : s.players)
+                if (!x.bankrupt && (best < 0 || liquidValue(s, x.id) > liquidValue(s, best))) best = x.id;
+            emit(ActionType::GAME_OVER, best);
+        }
+        return "";
+    }
+    // ------------------------------------------------------------ OVERRIDES
+    case ActionKind::SET_MONEY: {
+        if (!validPlayer(s, p)) return "invalid player";
+        GameEvent& e = emit(ActionType::OVERRIDE, p);
+        e.moneyChange = a.amount - s.players[p].money;
+        s.players[p].money = a.amount;
+        return "";
+    }
+    case ActionKind::SET_POS: {
+        if (!validPlayer(s, p)) return "invalid player";
+        if (a.amount < 0 || a.amount >= BOARD_SIZE) return "position must be 0-39";
+        s.players[p].position = a.amount;
+        emit(ActionType::OVERRIDE, p).position = a.amount;
+        return "";
+    }
+    case ActionKind::SET_OWNER: {
+        if (!validCard(a.card)) return "invalid card";
+        if (a.target != -1 && !validPlayer(s, a.target)) return "invalid owner";
+        CardState& cs = s.card(a.card);
+        int old = cs.owner;
+        cs.owner = a.target;
+        if (a.target == -1) {
+            cs.houses = 0;
+            cs.mortgaged = false;
+        }
+        if (s.pendingPurchase == a.card && a.target != -1) s.pendingPurchase = CardId::NONE;
+        GameEvent& e = emit(ActionType::OVERRIDE, a.target);
+        e.targetPlayerId = old;
+        e.cardsGained.push_back(a.card);
+        return "";
+    }
+    case ActionKind::SET_HOUSES: {
+        if (!validCard(a.card)) return "invalid card";
+        if (DataMaster::card(a.card).kind != CardKind::PROPERTY) return "not a property";
+        if (a.amount < 0 || a.amount > 5) return "houses must be 0-5";
+        s.card(a.card).houses = a.amount;
+        GameEvent& e = emit(ActionType::OVERRIDE, s.card(a.card).owner);
+        e.cardsGained.push_back(a.card);
+        return "";
+    }
+    }
+    return "unknown action";
+}
+
+// ============================================================================
+// 分析（簡易版: 着地率は一律 1/40）
+// ============================================================================
+
+double MonopolyEngine::calculateExpectedIncomePerTurn(int playerId) const {
+    if (!alivePlayer(state, playerId)) return 0.0;
+    int opponents = state.aliveCount() - 1;
+    if (opponents <= 0) return 0.0;
+    const double landProb = 1.0 / 40.0;
+    double income = 0.0;
+    for (CardId c : state.ownedBy(playerId)) income += rentOf(state, c, 7) * landProb * opponents;
+    double goBonus = (7.0 / 40.0) * state.settings.goBonus;  // 平均出目7 → 約 7/40 の確率で GO 通過
+    return income + goBonus;
+}
+
+double MonopolyEngine::evaluateTradeFairness(const TradeOffer& offer) const {
+    Action a;
+    a.kind = ActionKind::TRADE;
+    a.player = offer.proposerId;
+    a.target = offer.targetId;
+    a.trade = offer;
+
+    GameState sim = state;
+    std::vector<GameEvent> ev;
+    if (!execute(a, sim, ev).empty()) return 0.0;
+
+    MonopolyEngine after;
+    after.state = sim;
+    double dP = after.calculateExpectedIncomePerTurn(offer.proposerId) - calculateExpectedIncomePerTurn(offer.proposerId);
+    double dT = after.calculateExpectedIncomePerTurn(offer.targetId) - calculateExpectedIncomePerTurn(offer.targetId);
+    // カードの帳簿価値（抵当中は 価格 − 解除費用）
+    auto book = [&](CardId c) {
+        const Card& cd = DataMaster::card(c);
+        return state.card(c).mortgaged ? cd.price - unmortgageCost(state, c) : cd.price;
+    };
+    double cards = 0;
+    for (CardId c : offer.requestCards) cards += book(c);
+    for (CardId c : offer.offerCards) cards -= book(c);
+    const double money = offer.requestMoney - offer.offerMoney;
+    // 提案者視点のスコア（万円、正: 提案者有利）
+    //   提案者の得 = お金 + カード価値 + 10ターン分の期待収入の変化。相手の得との差の半分
+    constexpr double kHorizon = 10.0;
+    return money + cards + kHorizon * (dP - dT) / 2.0;
+}
+
+// ============================================================================
+// ActionKind <-> 文字列
+// ============================================================================
+
+namespace {
+const std::pair<ActionKind, const char*> kKindNames[] = {
+    {ActionKind::BUY, "BUY"},           {ActionKind::PASS, "PASS"},
+    {ActionKind::READY, "READY"},       {ActionKind::ROLL, "ROLL"},
+    {ActionKind::DECLINE, "DECLINE"},   {ActionKind::AUCTION, "AUCTION"},
+    {ActionKind::END_TURN, "END"},      {ActionKind::BUILD, "BUILD"},
+    {ActionKind::SELL, "SELL"},         {ActionKind::MORTGAGE, "MORTGAGE"},
+    {ActionKind::UNMORTGAGE, "UNMORTGAGE"}, {ActionKind::TRADE, "TRADE"},
+    {ActionKind::TRADE_CANCEL, "TRADE_CANCEL"}, {ActionKind::BANKRUPT, "BANKRUPT"},
+    {ActionKind::SET_MONEY, "SET_MONEY"}, {ActionKind::SET_OWNER, "SET_OWNER"},
+    {ActionKind::SET_HOUSES, "SET_HOUSES"}, {ActionKind::SET_POS, "SET_POS"},
+    {ActionKind::UTILITY_ROLL, "UROLL"}, {ActionKind::ALL_READY, "ALLREADY"},
+    {ActionKind::CONTINUE, "CONTINUE"},
+};
+}
+
+std::string actionKindToString(ActionKind k) {
+    for (const auto& kv : kKindNames)
+        if (kv.first == k) return kv.second;
+    return "?";
+}
+
+bool actionKindFromString(const std::string& s, ActionKind& out) {
+    for (const auto& kv : kKindNames)
+        if (s == kv.second) {
+            out = kv.first;
+            return true;
+        }
+    return false;
 }

@@ -4,6 +4,7 @@
 #include "Card.hpp"
 #include <vector>
 
+// proposer が offer(お金+カード) を出し、target から request(お金+カード) を受け取る
 struct TradeOffer {
     int proposerId = -1;
     int targetId = -1;

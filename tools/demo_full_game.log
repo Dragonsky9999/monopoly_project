@@ -1,0 +1,394 @@
+# MONOPOLY LOG
+version=2
+
+[SETTINGS]
+startMoney=1500
+goBonus=200
+tax=1
+doubleRentOnSet=1
+doublesRollAgain=1
+maxDoubles=3
+debtBlocksEndTurn=1
+utilityRentRoll=1
+endOnBankrupt=1
+unmortgageInterestPct=10
+
+[PLAYERS]
+0=riku
+1=Aoi
+2=Ken
+3=Mina
+
+[ACTIONS]
+BUY p=0 card=P-DB2
+BUY p=1 card=P-BR1
+BUY p=2 card=P-YE1
+BUY p=3 card=P-YE2
+BUY p=0 card=P-GR3
+BUY p=1 card=P-SB1
+BUY p=2 card=P-RE2
+BUY p=3 card=P-GR1
+BUY p=0 card=P-YE3
+BUY p=1 card=P-PI1
+BUY p=2 card=P-SB2
+BUY p=3 card=P-RE3
+BUY p=0 card=P-RE1
+BUY p=1 card=U-1
+PASS p=2
+BUY p=3 card=P-BR2
+BUY p=0 card=P-SB3
+BUY p=1 card=P-OR1
+PASS p=2
+PASS p=3
+PASS p=0
+BUY p=1 card=R-1
+PASS p=2
+PASS p=3
+PASS p=0
+BUY p=1 card=P-GR2
+PASS p=2
+PASS p=3
+PASS p=0
+PASS p=1
+TRADE p=0 to=1 give=P-GR3 get=P-SB1
+TRADE_CANCEL p=0 to=2 give=P-YE3+50 get=P-SB2
+TRADE p=0 to=2 give=P-YE3 get=P-SB2
+TRADE p=1 to=3 give=P-GR3 get=P-BR2
+TRADE p=2 to=0 give=286 get=P-RE1
+TRADE p=2 to=3 give=P-YE3+32 get=P-RE3
+TRADE p=3 to=2 give=338 get=P-YE1
+ALLREADY
+ROLL p=0 d1=6 d2=2
+BUILD p=0 card=P-SB1
+BUILD p=0 card=P-SB2
+END p=0
+ROLL p=1 d1=3 d2=1
+END p=1
+ROLL p=2 d1=5 d2=4
+BUILD p=2 card=P-RE1
+BUILD p=2 card=P-RE2
+BUILD p=2 card=P-RE3
+BUILD p=2 card=P-RE1
+BUILD p=2 card=P-RE2
+END p=2
+ROLL p=3 d1=1 d2=1
+ROLL p=3 d1=4 d2=1
+BUILD p=3 card=P-YE1
+END p=3
+ROLL p=0 d1=5 d2=4
+BUILD p=0 card=P-SB3
+END p=0
+ROLL p=1 d1=3 d2=6
+AUCTION p=1 to=0 amount=112
+END p=1
+ROLL p=2 d1=6 d2=1
+END p=2
+ROLL p=3 d1=6 d2=5
+DECLINE p=3
+END p=3
+ROLL p=0 d1=5 d2=4
+END p=0
+ROLL p=1 d1=4 d2=5
+END p=1
+ROLL p=2 d1=2 d2=3
+END p=2
+ROLL p=3 d1=1 d2=3
+BUILD p=3 card=P-YE2
+END p=3
+ROLL p=0 d1=1 d2=2
+END p=0
+ROLL p=1 d1=6 d2=3
+END p=1
+ROLL p=2 d1=1 d2=1
+ROLL p=2 d1=3 d2=2
+DECLINE p=2
+END p=2
+ROLL p=3 d1=2 d2=4
+DECLINE p=3
+END p=3
+ROLL p=0 d1=1 d2=3
+END p=0
+ROLL p=1 d1=1 d2=2
+END p=1
+ROLL p=2 d1=4 d2=1
+END p=2
+ROLL p=3 d1=5 d2=4
+DECLINE p=3
+END p=3
+ROLL p=0 d1=1 d2=6
+END p=0
+ROLL p=1 d1=6 d2=3
+BUILD p=1 card=P-BR1
+BUILD p=1 card=P-BR2
+BUILD p=1 card=P-BR1
+END p=1
+ROLL p=2 d1=1 d2=3
+DECLINE p=2
+END p=2
+ROLL p=3 d1=6 d2=1
+END p=3
+ROLL p=0 d1=5 d2=1
+END p=0
+ROLL p=1 d1=5 d2=3
+END p=1
+ROLL p=2 d1=6 d2=3
+BUILD p=2 card=P-RE3
+END p=2
+ROLL p=3 d1=6 d2=4
+DECLINE p=3
+END p=3
+ROLL p=0 d1=6 d2=6
+DECLINE p=0
+ROLL p=0 d1=1 d2=1
+ROLL p=0 d1=3 d2=5
+DECLINE p=0
+END p=0
+ROLL p=1 d1=1 d2=6
+DECLINE p=1
+END p=1
+ROLL p=2 d1=2 d2=3
+END p=2
+ROLL p=3 d1=3 d2=5
+END p=3
+ROLL p=0 d1=2 d2=1
+END p=0
+ROLL p=1 d1=5 d2=6
+END p=1
+ROLL p=2 d1=1 d2=3
+DECLINE p=2
+END p=2
+ROLL p=3 d1=2 d2=3
+BUILD p=3 card=P-YE3
+END p=3
+ROLL p=0 d1=2 d2=2
+DECLINE p=0
+ROLL p=0 d1=5 d2=6
+BUILD p=0 card=P-SB1
+BUILD p=0 card=P-SB2
+END p=0
+ROLL p=1 d1=5 d2=2
+END p=1
+ROLL p=2 d1=1 d2=5
+END p=2
+ROLL p=3 d1=6 d2=5
+END p=3
+ROLL p=0 d1=1 d2=5
+UROLL p=0 d1=3 d2=6
+END p=0
+ROLL p=1 d1=6 d2=6
+ROLL p=1 d1=1 d2=3
+BUILD p=1 card=P-BR2
+BUILD p=1 card=P-BR1
+END p=1
+ROLL p=2 d1=1 d2=3
+DECLINE p=2
+END p=2
+ROLL p=3 d1=6 d2=4
+END p=3
+ROLL p=0 d1=4 d2=5
+END p=0
+ROLL p=1 d1=2 d2=4
+AUCTION p=1 to=2 amount=144
+END p=1
+ROLL p=2 d1=5 d2=1
+BUILD p=2 card=P-RE1
+END p=2
+ROLL p=3 d1=4 d2=2
+DECLINE p=3
+END p=3
+ROLL p=0 d1=6 d2=2
+END p=0
+ROLL p=1 d1=1 d2=4
+SELL p=1 card=P-BR1
+SELL p=1 card=P-BR1
+SELL p=1 card=P-BR2
+END p=1
+ROLL p=2 d1=6 d2=3
+BUILD p=2 card=P-RE2
+BUILD p=2 card=P-RE3
+BUILD p=2 card=P-RE1
+END p=2
+ROLL p=3 d1=3 d2=1
+BUILD p=3 card=P-YE1
+END p=3
+ROLL p=0 d1=5 d2=6
+END p=0
+ROLL p=1 d1=3 d2=2
+AUCTION p=1 to=0 amount=120
+END p=1
+ROLL p=2 d1=5 d2=5
+ROLL p=2 d1=2 d2=2
+DECLINE p=2
+ROLL p=2 d1=6 d2=5
+DECLINE p=2
+END p=2
+ROLL p=3 d1=3 d2=5
+END p=3
+ROLL p=0 d1=1 d2=5
+END p=0
+ROLL p=1 d1=4 d2=3
+DECLINE p=1
+END p=1
+ROLL p=2 d1=6 d2=3
+END p=2
+ROLL p=3 d1=3 d2=6
+DECLINE p=3
+END p=3
+ROLL p=0 d1=3 d2=3
+UROLL p=0 d1=5 d2=4
+ROLL p=0 d1=2 d2=5
+DECLINE p=0
+END p=0
+ROLL p=1 d1=1 d2=6
+BUILD p=1 card=P-BR1
+END p=1
+ROLL p=2 d1=1 d2=5
+BUILD p=2 card=P-RE2
+END p=2
+ROLL p=3 d1=1 d2=2
+END p=3
+ROLL p=0 d1=6 d2=2
+END p=0
+ROLL p=1 d1=4 d2=1
+END p=1
+ROLL p=2 d1=2 d2=3
+END p=2
+ROLL p=3 d1=2 d2=5
+BUILD p=3 card=P-YE2
+END p=3
+ROLL p=0 d1=5 d2=2
+END p=0
+ROLL p=1 d1=3 d2=4
+DECLINE p=1
+BUILD p=1 card=P-BR2
+END p=1
+ROLL p=2 d1=6 d2=3
+DECLINE p=2
+END p=2
+ROLL p=3 d1=6 d2=2
+END p=3
+ROLL p=0 d1=1 d2=3
+SELL p=0 card=P-SB1
+SELL p=0 card=P-SB2
+SELL p=0 card=P-SB1
+END p=0
+ROLL p=1 d1=5 d2=3
+END p=1
+ROLL p=2 d1=3 d2=1
+END p=2
+ROLL p=3 d1=1 d2=5
+DECLINE p=3
+END p=3
+ROLL p=0 d1=4 d2=1
+END p=0
+ROLL p=1 d1=2 d2=6
+BUILD p=1 card=P-BR1
+BUILD p=1 card=P-BR2
+END p=1
+ROLL p=2 d1=3 d2=6
+SELL p=2 card=P-RE1
+SELL p=2 card=P-RE2
+SELL p=2 card=P-RE1
+END p=2
+ROLL p=3 d1=4 d2=6
+BUILD p=3 card=P-YE3
+BUILD p=3 card=P-YE1
+BUILD p=3 card=P-YE2
+END p=3
+ROLL p=0 d1=6 d2=3
+UROLL p=0 d1=6 d2=3
+END p=0
+ROLL p=1 d1=5 d2=5
+ROLL p=1 d1=3 d2=5
+BUILD p=1 card=P-BR1
+BUILD p=1 card=P-BR2
+BUILD p=1 card=P-BR1
+BUILD p=1 card=P-BR2
+END p=1
+ROLL p=2 d1=3 d2=4
+SELL p=2 card=P-RE2
+END p=2
+ROLL p=3 d1=1 d2=3
+END p=3
+ROLL p=0 d1=4 d2=2
+END p=0
+ROLL p=1 d1=3 d2=5
+END p=1
+ROLL p=2 d1=4 d2=5
+SELL p=2 card=P-RE3
+SELL p=2 card=P-RE1
+SELL p=2 card=P-RE2
+END p=2
+ROLL p=3 d1=2 d2=5
+BUILD p=3 card=P-YE3
+END p=3
+ROLL p=0 d1=3 d2=2
+END p=0
+ROLL p=1 d1=2 d2=1
+BUY p=1
+END p=1
+ROLL p=2 d1=1 d2=5
+END p=2
+ROLL p=3 d1=6 d2=4
+END p=3
+ROLL p=0 d1=6 d2=6
+AUCTION p=0 to=1 amount=160
+ROLL p=0 d1=2 d2=2
+ROLL p=0 d1=3 d2=5
+END p=0
+ROLL p=1 d1=4 d2=6
+SELL p=1 card=P-BR1
+SELL p=1 card=P-BR2
+SELL p=1 card=P-BR1
+SELL p=1 card=P-BR2
+SELL p=1 card=P-BR1
+SELL p=1 card=P-BR2
+SELL p=1 card=P-BR1
+SELL p=1 card=P-BR2
+SELL p=1 card=P-BR1
+SELL p=1 card=P-BR2
+MORTGAGE p=1 card=P-BR1
+MORTGAGE p=1 card=P-BR2
+MORTGAGE p=1 card=P-PI1
+MORTGAGE p=1 card=P-OR1
+MORTGAGE p=1 card=P-OR3
+MORTGAGE p=1 card=P-GR2
+END p=1
+ROLL p=2 d1=1 d2=3
+END p=2
+ROLL p=3 d1=3 d2=6
+BUILD p=3 card=P-YE1
+BUILD p=3 card=P-YE2
+BUILD p=3 card=P-YE3
+BUILD p=3 card=P-YE1
+BUILD p=3 card=P-YE2
+BUILD p=3 card=P-YE3
+END p=3
+ROLL p=0 d1=3 d2=2
+UROLL p=0 d1=6 d2=6
+END p=0
+ROLL p=1 d1=4 d2=5
+END p=1
+ROLL p=2 d1=2 d2=6
+END p=2
+ROLL p=3 d1=3 d2=1
+END p=3
+ROLL p=0 d1=3 d2=5
+END p=0
+ROLL p=1 d1=4 d2=5
+END p=1
+ROLL p=2 d1=4 d2=3
+UROLL p=2 d1=3 d2=1
+END p=2
+ROLL p=3 d1=2 d2=6
+END p=3
+ROLL p=0 d1=5 d2=4
+SELL p=0 card=P-SB2
+SELL p=0 card=P-SB3
+MORTGAGE p=0 card=P-SB1
+MORTGAGE p=0 card=P-SB2
+MORTGAGE p=0 card=P-SB3
+MORTGAGE p=0 card=P-PI2
+MORTGAGE p=0 card=P-DB2
+MORTGAGE p=0 card=U-2
+BANKRUPT p=0 to=3

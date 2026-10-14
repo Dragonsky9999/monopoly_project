@@ -1,0 +1,537 @@
+# MONOPOLY LOG
+version=2
+
+[SETTINGS]
+startMoney=1500
+goBonus=200
+tax=1
+doubleRentOnSet=0
+unmortgageInterestPct=10
+
+[PLAYERS]
+0=riku
+1=Aoi
+2=Ken
+3=Mina
+
+[ACTIONS]
+BUY p=0 card=P-DB2
+#   > riku bought P-DB2 for 400 (riku: 1100)
+BUY p=1 card=P-DB1
+#   > Aoi bought P-DB1 for 350 (Aoi: 1150)
+BUY p=2 card=P-GR3
+#   > Ken bought P-GR3 for 320 (Ken: 1180)
+BUY p=3 card=P-GR1
+#   > Mina bought P-GR1 for 300 (Mina: 1200)
+BUY p=0 card=P-GR2
+#   > riku bought P-GR2 for 300 (riku: 800)
+BUY p=1 card=P-YE3
+#   > Aoi bought P-YE3 for 280 (Aoi: 870)
+BUY p=2 card=P-YE1
+#   > Ken bought P-YE1 for 260 (Ken: 920)
+BUY p=3 card=P-YE2
+#   > Mina bought P-YE2 for 260 (Mina: 940)
+BUY p=0 card=P-RE3
+#   > riku bought P-RE3 for 240 (riku: 560)
+BUY p=1 card=P-RE1
+#   > Aoi bought P-RE1 for 220 (Aoi: 650)
+BUY p=2 card=P-RE2
+#   > Ken bought P-RE2 for 220 (Ken: 700)
+BUY p=3 card=P-OR3
+#   > Mina bought P-OR3 for 200 (Mina: 740)
+BUY p=0 card=R-1
+#   > riku bought R-1 for 200 (riku: 360)
+BUY p=1 card=R-2
+#   > Aoi bought R-2 for 200 (Aoi: 450)
+BUY p=2 card=R-3
+#   > Ken bought R-3 for 200 (Ken: 500)
+BUY p=3 card=R-4
+#   > Mina bought R-4 for 200 (Mina: 540)
+BUY p=0 card=P-OR1
+#   > riku bought P-OR1 for 180 (riku: 180)
+BUY p=1 card=P-OR2
+#   > Aoi bought P-OR2 for 180 (Aoi: 270)
+BUY p=2 card=P-PI3
+#   > Ken bought P-PI3 for 160 (Ken: 340)
+BUY p=3 card=U-1
+#   > Mina bought U-1 for 150 (Mina: 390)
+PASS p=0
+#   > riku passed
+BUY p=1 card=P-SB3
+#   > Aoi bought P-SB3 for 120 (Aoi: 150)
+BUY p=2 card=U-2
+#   > Ken bought U-2 for 150 (Ken: 190)
+BUY p=3 card=P-PI1
+#   > Mina bought P-PI1 for 140 (Mina: 250)
+PASS p=0
+#   > riku passed
+PASS p=1
+#   > Aoi passed
+PASS p=2
+#   > Ken passed
+BUY p=3 card=P-SB1
+#   > Mina bought P-SB1 for 100 (Mina: 150)
+PASS p=0
+#   > riku passed
+PASS p=1
+#   > Aoi passed
+PASS p=2
+#   > Ken passed
+PASS p=3
+#   > Mina passed
+#   > phase changed
+TRADE p=0 to=3 give=30 get=P-SB1
+#   > trade: riku got [P-SB1] gave [-] money -30 with Mina
+TRADE p=0 to=1 give=30 get=P-SB3
+#   > trade: riku got [P-SB3] gave [-] money -30 with Aoi
+READY p=0
+#   > riku ready
+READY p=1
+#   > Aoi ready
+READY p=2
+#   > Ken ready
+READY p=3
+#   > Mina ready
+#   > phase changed
+ROLL p=0 d1=3 d2=5
+#   > riku rolled 3+5 -> [8] P-SB2
+#   > riku landed on unowned P-SB2 (buy / decline / auction)
+DECLINE p=0
+#   > riku declined P-SB2
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=1 d2=3
+#   > Aoi rolled 1+3 -> [4] TAX-1
+#   > Aoi paid tax 200 (Aoi: -20)
+MORTGAGE p=1 card=P-OR2
+#   > Aoi mortgaged P-OR2 +90 (Aoi: 70)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=6 d2=3
+#   > Ken rolled 6+3 -> [9] P-SB3
+#   > Ken paid rent 8 to riku (P-SB3) (Ken: 182)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=6 d2=2
+#   > Mina rolled 6+2 -> [8] P-SB2
+#   > Mina landed on unowned P-SB2 (buy / decline / auction)
+DECLINE p=3
+#   > Mina declined P-SB2
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=6 d2=2
+#   > riku rolled 6+2 -> [16] P-OR1
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=4 d2=1
+#   > Aoi rolled 4+1 -> [9] P-SB3
+#   > Aoi paid rent 8 to riku (P-SB3) (Aoi: 62)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=1 d2=1
+#   > Ken rolled 1+1 -> [11] P-PI1
+#   > Ken paid rent 10 to Mina (P-PI1) (Ken: 172)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=4 d2=5
+#   > Mina rolled 4+5 -> [17] BLANK
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=5 d2=5
+#   > riku rolled 5+5 -> [26] P-YE1
+#   > riku paid rent 22 to Ken (P-YE1) (riku: 114)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=1 d2=1
+#   > Aoi rolled 1+1 -> [11] P-PI1
+#   > Aoi paid rent 10 to Mina (P-PI1) (Aoi: 52)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=5 d2=4
+#   > Ken rolled 5+4 -> [20] BLANK
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=2 d2=3
+#   > Mina rolled 2+3 -> [22] BLANK
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=4 d2=4
+#   > riku rolled 4+4 -> [34] P-GR3
+#   > riku paid rent 28 to Ken (P-GR3) (riku: 86)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=2 d2=2
+#   > Aoi rolled 2+2 -> [15] R-2
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=3 d2=2
+#   > Ken rolled 3+2 -> [25] R-3
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=1 d2=6
+#   > Mina rolled 1+6 -> [29] P-YE3
+#   > Mina paid rent 24 to Aoi (P-YE3) (Mina: 176)
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=1 d2=3
+#   > riku rolled 1+3 -> [38] TAX-2
+#   > riku paid tax 100 (riku: -14)
+MORTGAGE p=0 card=P-SB1
+#   > riku mortgaged P-SB1 +50 (riku: 36)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=2 d2=5
+#   > Aoi rolled 2+5 -> [22] BLANK
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=3 d2=2
+#   > Ken rolled 3+2 -> [30] BLANK
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=3 d2=6
+#   > Mina rolled 3+6 -> [38] TAX-2
+#   > Mina paid tax 100 (Mina: 76)
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=1 d2=1
+#   > riku rolled 1+1 -> [0] GO
+#   > riku GO bonus +200 (riku: 236)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=6 d2=1
+#   > Aoi rolled 6+1 -> [29] P-YE3
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=4 d2=2
+#   > Ken rolled 4+2 -> [36] BLANK
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=3 d2=3
+#   > Mina rolled 3+3 -> [4] TAX-1
+#   > Mina GO bonus +200 (Mina: 76)
+#   > Mina paid tax 200 (Mina: 76)
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=1 d2=3
+#   > riku rolled 1+3 -> [4] TAX-1
+#   > riku paid tax 200 (riku: 36)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=4 d2=1
+#   > Aoi rolled 4+1 -> [34] P-GR3
+#   > Aoi paid rent 28 to Ken (P-GR3) (Aoi: 48)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=3 d2=5
+#   > Ken rolled 3+5 -> [4] TAX-1
+#   > Ken GO bonus +200 (Ken: 250)
+#   > Ken paid tax 200 (Ken: 250)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=1 d2=5
+#   > Mina rolled 1+5 -> [10] BLANK
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=6 d2=3
+#   > riku rolled 6+3 -> [13] P-PI2
+#   > riku landed on unowned P-PI2 (buy / decline / auction)
+DECLINE p=0
+#   > riku declined P-PI2
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=4 d2=4
+#   > Aoi rolled 4+4 -> [2] BLANK
+#   > Aoi GO bonus +200 (Aoi: 248)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=3 d2=2
+#   > Ken rolled 3+2 -> [9] P-SB3
+#   > Ken paid rent 8 to riku (P-SB3) (Ken: 242)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=1 d2=3
+#   > Mina rolled 1+3 -> [14] P-PI3
+#   > Mina paid rent 12 to Ken (P-PI3) (Mina: 64)
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=4 d2=1
+#   > riku rolled 4+1 -> [18] P-OR2
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=1 d2=4
+#   > Aoi rolled 1+4 -> [7] BLANK
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=4 d2=6
+#   > Ken rolled 4+6 -> [19] P-OR3
+#   > Ken paid rent 16 to Mina (P-OR3) (Ken: 238)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=1 d2=1
+#   > Mina rolled 1+1 -> [16] P-OR1
+#   > Mina paid rent 14 to riku (P-OR1) (Mina: 66)
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=5 d2=4
+#   > riku rolled 5+4 -> [27] P-YE2
+#   > riku paid rent 22 to Mina (P-YE2) (riku: 36)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=5 d2=2
+#   > Aoi rolled 5+2 -> [14] P-PI3
+#   > Aoi paid rent 12 to Ken (P-PI3) (Aoi: 236)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=5 d2=2
+#   > Ken rolled 5+2 -> [26] P-YE1
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=4 d2=2
+#   > Mina rolled 4+2 -> [22] BLANK
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=1 d2=1
+#   > riku rolled 1+1 -> [29] P-YE3
+#   > riku paid rent 24 to Aoi (P-YE3) (riku: 12)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=3 d2=1
+#   > Aoi rolled 3+1 -> [18] P-OR2
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=6 d2=4
+#   > Ken rolled 6+4 -> [36] BLANK
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=6 d2=2
+#   > Mina rolled 6+2 -> [30] BLANK
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=6 d2=5
+#   > riku rolled 6+5 -> [0] GO
+#   > riku GO bonus +200 (riku: 212)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=5 d2=1
+#   > Aoi rolled 5+1 -> [24] P-RE3
+#   > Aoi paid rent 20 to riku (P-RE3) (Aoi: 240)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=3 d2=5
+#   > Ken rolled 3+5 -> [4] TAX-1
+#   > Ken GO bonus +200 (Ken: 250)
+#   > Ken paid tax 200 (Ken: 250)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=4 d2=6
+#   > Mina rolled 4+6 -> [0] GO
+#   > Mina GO bonus +200 (Mina: 288)
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=5 d2=6
+#   > riku rolled 5+6 -> [11] P-PI1
+#   > riku paid rent 10 to Mina (P-PI1) (riku: 222)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=2 d2=3
+#   > Aoi rolled 2+3 -> [29] P-YE3
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=3 d2=4
+#   > Ken rolled 3+4 -> [11] P-PI1
+#   > Ken paid rent 10 to Mina (P-PI1) (Ken: 240)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=6 d2=4
+#   > Mina rolled 6+4 -> [10] BLANK
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=2 d2=1
+#   > riku rolled 2+1 -> [14] P-PI3
+#   > riku paid rent 12 to Ken (P-PI3) (riku: 210)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=1 d2=6
+#   > Aoi rolled 1+6 -> [36] BLANK
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=1 d2=2
+#   > Ken rolled 1+2 -> [14] P-PI3
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=3 d2=5
+#   > Mina rolled 3+5 -> [18] P-OR2
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=2 d2=6
+#   > riku rolled 2+6 -> [22] BLANK
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=6 d2=4
+#   > Aoi rolled 6+4 -> [6] P-SB1
+#   > Aoi GO bonus +200 (Aoi: 440)
+UNMORTGAGE p=1 card=P-OR2
+#   > Aoi unmortgaged P-OR2 -99 (Aoi: 341)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=2 d2=2
+#   > Ken rolled 2+2 -> [18] P-OR2
+#   > Ken paid rent 14 to Aoi (P-OR2) (Ken: 238)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=4 d2=5
+#   > Mina rolled 4+5 -> [27] P-YE2
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=2 d2=4
+#   > riku rolled 2+4 -> [28] U-2
+#   > riku paid rent 24 to Ken (U-2) (riku: 186)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=2 d2=4
+#   > Aoi rolled 2+4 -> [12] U-1
+#   > Aoi paid rent 24 to Mina (U-1) (Aoi: 331)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=6 d2=5
+#   > Ken rolled 6+5 -> [29] P-YE3
+#   > Ken paid rent 24 to Aoi (P-YE3) (Ken: 238)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=2 d2=2
+#   > Mina rolled 2+2 -> [31] P-GR1
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=2 d2=4
+#   > riku rolled 2+4 -> [34] P-GR3
+#   > riku paid rent 28 to Ken (P-GR3) (riku: 158)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=3 d2=4
+#   > Aoi rolled 3+4 -> [19] P-OR3
+#   > Aoi paid rent 16 to Mina (P-OR3) (Aoi: 339)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=6 d2=3
+#   > Ken rolled 6+3 -> [38] TAX-2
+#   > Ken paid tax 100 (Ken: 166)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=6 d2=4
+#   > Mina rolled 6+4 -> [1] P-BR1
+#   > Mina GO bonus +200 (Mina: 548)
+#   > Mina landed on unowned P-BR1 (buy / decline / auction)
+BUY p=3
+#   > Mina bought P-BR1 for 60 (Mina: 488)
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=4 d2=1
+#   > riku rolled 4+1 -> [39] P-DB2
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=2 d2=2
+#   > Aoi rolled 2+2 -> [23] P-RE2
+#   > Aoi paid rent 18 to Ken (P-RE2) (Aoi: 321)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=6 d2=4
+#   > Ken rolled 6+4 -> [8] P-SB2
+#   > Ken GO bonus +200 (Ken: 384)
+#   > Ken landed on unowned P-SB2 (buy / decline / auction)
+BUY p=2
+#   > Ken bought P-SB2 for 100 (Ken: 284)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=5 d2=4
+#   > Mina rolled 5+4 -> [10] BLANK
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=3 d2=1
+#   > riku rolled 3+1 -> [3] P-BR2
+#   > riku GO bonus +200 (riku: 358)
+#   > riku landed on unowned P-BR2 (buy / decline / auction)
+BUY p=0
+#   > riku bought P-BR2 for 60 (riku: 298)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=1 d2=3
+#   > Aoi rolled 1+3 -> [27] P-YE2
+#   > Aoi paid rent 22 to Mina (P-YE2) (Aoi: 299)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=4 d2=1
+#   > Ken rolled 4+1 -> [13] P-PI2
+#   > Ken landed on unowned P-PI2 (buy / decline / auction)
+DECLINE p=2
+#   > Ken declined P-PI2
+END p=2
+#   > Ken ended turn
+TRADE p=0 to=2 give=30 get=P-SB2
+#   > trade: riku got [P-SB2] gave [-] money -30 with Ken
+TRADE p=0 to=3 give=30 get=P-BR1
+#   > trade: riku got [P-BR1] gave [-] money -30 with Mina
+BUILD p=0 card=P-BR1
+#   > riku built on P-BR1 (riku: 188)
+BUILD p=0 card=P-BR2
+#   > riku built on P-BR2 (riku: 138)
+BUILD p=0 card=P-BR1
+#   > riku built on P-BR1 (riku: 88)
+BUILD p=0 card=P-BR2
+#   > riku built on P-BR2 (riku: 38)
+ROLL p=3 d1=3 d2=1
+#   > Mina rolled 3+1 -> [14] P-PI3
+#   > Mina paid rent 12 to Ken (P-PI3) (Mina: 528)
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=2 d2=4
+#   > riku rolled 2+4 -> [9] P-SB3
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=6 d2=4
+#   > Aoi rolled 6+4 -> [37] P-DB1
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=2 d2=3
+#   > Ken rolled 2+3 -> [18] P-OR2
+#   > Ken paid rent 14 to Aoi (P-OR2) (Ken: 312)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=2 d2=4
+#   > Mina rolled 2+4 -> [20] BLANK
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=4 d2=3
+#   > riku rolled 4+3 -> [16] P-OR1
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=6 d2=4
+#   > Aoi rolled 6+4 -> [7] BLANK
+#   > Aoi GO bonus +200 (Aoi: 513)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=4 d2=1
+#   > Ken rolled 4+1 -> [23] P-RE2
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=4 d2=4
+#   > Mina rolled 4+4 -> [28] U-2
+#   > Mina paid rent 32 to Ken (U-2) (Mina: 496)
+END p=3
+#   > Mina ended turn
+ROLL p=0 d1=1 d2=1
+#   > riku rolled 1+1 -> [18] P-OR2
+#   > riku paid rent 14 to Aoi (P-OR2) (riku: 24)
+END p=0
+#   > riku ended turn
+ROLL p=1 d1=6 d2=3
+#   > Aoi rolled 6+3 -> [16] P-OR1
+#   > Aoi paid rent 14 to riku (P-OR1) (Aoi: 513)
+END p=1
+#   > Aoi ended turn
+ROLL p=2 d1=1 d2=5
+#   > Ken rolled 1+5 -> [29] P-YE3
+#   > Ken paid rent 24 to Aoi (P-YE3) (Ken: 320)
+END p=2
+#   > Ken ended turn
+ROLL p=3 d1=1 d2=6
+#   > Mina rolled 1+6 -> [35] R-4

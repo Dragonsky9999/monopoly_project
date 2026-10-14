@@ -1,4 +1,4 @@
-﻿build/
+build/
 bin/
 lib/
 out/
@@ -13,3 +13,18 @@ cmake_install.cmake
 Makefile
 .DS_Store
 Thumbs.db
+monopoly_autosave.log
+build-gui/
+dist/
+tools/probe.log
+tools/setup_qt.log
+tools/build_gui.log
+tools/aqtinstall.log
+tools/*_console.txt
+tools/ping.*
+tools/shots/
+# 個人のプレイ記録・作業用コピー
+monopoly_log_*.log
+tools/autosave_copy.log
+tools/autosave_backup.log
+test_scripted.log

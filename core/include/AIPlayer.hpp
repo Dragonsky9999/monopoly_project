@@ -1,37 +1,31 @@
 ﻿#ifndef AI_PLAYER_HPP
 #define AI_PLAYER_HPP
 
+#include "Action.hpp"
 #include "MonopolyEngine.hpp"
-#include "TradeOffer.hpp"
 #include <optional>
-#include <vector>
+#include <random>
 
-enum class AIDifficulty {
-    EASY,
-    BALANCED,
-    AGGRESSIVE,
-    MASTER // ガチ思考プロファイル
-};
+enum class AIDifficulty { EASY, BALANCED, AGGRESSIVE, MASTER };
 
+// AI は「次に入力するアクション」を1つ返すだけ。適用は呼び出し側が engine.apply() で行う
+// （人間の入力と同じ経路を通るので、AI の手もそのままログ・Undo の対象になる）
 class AIPlayer {
 public:
-    AIPlayer(int playerId, AIDifficulty difficulty = AIDifficulty::MASTER);
+    AIPlayer(int playerId, AIDifficulty difficulty = AIDifficulty::BALANCED, unsigned seed = std::random_device{}());
 
     int getPlayerId() const { return playerId; }
 
-    // 高度な意思決定関数
-    bool shouldBuyProperty(const MonopolyEngine& engine, CardId cardId) const;
-    bool shouldBuildHouse(const MonopolyEngine& engine, CardId cardId) const;
-    std::optional<TradeOffer> proposeTrade(const MonopolyEngine& engine) const;
+    // 今この AI がやるべきことがなければ nullopt
+    std::optional<Action> decide(const MonopolyEngine& engine);
+
     bool acceptTrade(const MonopolyEngine& engine, const TradeOffer& offer) const;
 
 private:
     int playerId;
     AIDifficulty difficulty;
     int safetyCashMargin;
-
-    // ヘルパー：特定グループの所有状況を調査
-    bool isGroupTargetNeeded(const MonopolyEngine& engine, CardId cardId) const;
+    std::mt19937 rng;
 };
 
 #endif
